@@ -1,0 +1,21 @@
+{
+  "name": "mbed-client-libservice",
+  "version": "3.0.0",
+  "description": "Helper libraries for mbed-client and 6LoWPAN stack.",
+  "keywords": [
+    "libservice"
+  ],
+  "author": "Seppo Takalo <seppo.takalo@arm.com>",
+  "homepage": "https://github.com/ARMmbed/mbed-client-libservice",
+  "licenses": [
+    {
+      "url": "https://spdx.org/licenses/Apache-2.0",
+      "type": "Apache-2.0"
+    }
+  ],
+  "extraIncludes": [
+    "mbed-client-libservice"
+  ],
+  "dependencies": {},
+  "targetDependencies": {}
+}
