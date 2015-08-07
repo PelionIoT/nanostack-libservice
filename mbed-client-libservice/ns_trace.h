@@ -46,18 +46,6 @@
 extern "C" {
 #endif
 
-//usage macros:
-#define tr_info(...)            tracef(TRACE_LEVEL_INFO,    TRACE_GROUP, __VA_ARGS__)   //!< Print info message
-#define tr_debug(...)           tracef(TRACE_LEVEL_DEBUG,   TRACE_GROUP, __VA_ARGS__)   //!< Print debug message
-#define tr_warning(...)         tracef(TRACE_LEVEL_WARN,    TRACE_GROUP, __VA_ARGS__)   //!< Print warning message
-#define tr_warn(...)            tracef(TRACE_LEVEL_WARN,    TRACE_GROUP, __VA_ARGS__)   //!< Alternative warning message
-#define tr_error(...)           tracef(TRACE_LEVEL_ERROR,   TRACE_GROUP, __VA_ARGS__)   //!< Print Error Message
-#define tr_err(...)             tracef(TRACE_LEVEL_ERROR,   TRACE_GROUP, __VA_ARGS__)   //!< Alternative error message
-#define tr_cmdline(...)         tracef(TRACE_LEVEL_CMD,     TRACE_GROUP, __VA_ARGS__)   //!< Special print for cmdline. See more from TRACE_LEVEL_CMD -level
-
-/** Possible to skip all traces in compile time */
-#if defined(FEA_TRACE_SUPPORT) || defined(HAVE_DEBUG) /*backward compatible*/
-
 /** 3 upper bits are trace modes related,
     and 5 lower bits are trace level configuration */
 
@@ -99,6 +87,17 @@ extern "C" {
 /** special level for cmdline. Behaviours like "plain mode" */
 #define TRACE_LEVEL_CMD           0x01
 
+//usage macros:
+#define tr_info(...)            tracef(TRACE_LEVEL_INFO,    TRACE_GROUP, __VA_ARGS__)   //!< Print info message
+#define tr_debug(...)           tracef(TRACE_LEVEL_DEBUG,   TRACE_GROUP, __VA_ARGS__)   //!< Print debug message
+#define tr_warning(...)         tracef(TRACE_LEVEL_WARN,    TRACE_GROUP, __VA_ARGS__)   //!< Print warning message
+#define tr_warn(...)            tracef(TRACE_LEVEL_WARN,    TRACE_GROUP, __VA_ARGS__)   //!< Alternative warning message
+#define tr_error(...)           tracef(TRACE_LEVEL_ERROR,   TRACE_GROUP, __VA_ARGS__)   //!< Print Error Message
+#define tr_err(...)             tracef(TRACE_LEVEL_ERROR,   TRACE_GROUP, __VA_ARGS__)   //!< Alternative error message
+#define tr_cmdline(...)         tracef(TRACE_LEVEL_CMD,     TRACE_GROUP, __VA_ARGS__)   //!< Special print for cmdline. See more from TRACE_LEVEL_CMD -level
+
+/** Possible to skip all traces in compile time */
+#if defined(FEA_TRACE_SUPPORT) || defined(HAVE_DEBUG) /*backward compatible*/
 
 #if defined  __GNUC__ || defined __CC_ARM
 /**
