@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
  * \file ns_trace.h
- * \brief Trace interface for NanoStack library.
+ * Trace interface for NanoStack library as well as application.
+ * This file provide simple but flexible way to handle software traces.
+ * Trace library are abstract layer, which use stdout (printf) by default, 
+ * but outputs can be easily redirect to custom function, for example to 
+ * store traces to memory or other interfaces.
  *
- * \note
- *  usage:
- *      myfile.c:
+ *  usage example:
+ * \code(main.c:)
  *      #include "ns_trace.h"
- *      #define TRACE_GROUP  "mylb"
+ *      #define TRACE_GROUP  "main"
  *
- *      void myfuction(){
- *          tr_debug("this is debug msg");
+ *      int main(void){
+ *          trace_init();   // initialize trace library
+ *          tr_debug("this is debug msg");  //print debug message to stdout: "[DBG]
  *          tr_err("this is error msg");
  *          tr_warn("this is warning msg");
  *          tr_info("this is info msg");
+ *          return 0;
  *      }
+ * \endcode
  *
  */
 #ifndef NS_TRACE_H_
@@ -40,14 +47,15 @@ extern "C" {
 #endif
 
 //usage macros:
-#define tr_info(...)            tracef(TRACE_LEVEL_INFO,    TRACE_GROUP, __VA_ARGS__)
-#define tr_debug(...)           tracef(TRACE_LEVEL_DEBUG,   TRACE_GROUP, __VA_ARGS__)
-#define tr_warning(...)         tracef(TRACE_LEVEL_WARN,    TRACE_GROUP, __VA_ARGS__)
-#define tr_warn(...)            tracef(TRACE_LEVEL_WARN,    TRACE_GROUP, __VA_ARGS__)
-#define tr_error(...)           tracef(TRACE_LEVEL_ERROR,   TRACE_GROUP, __VA_ARGS__)
-#define tr_err(...)             tracef(TRACE_LEVEL_ERROR,   TRACE_GROUP, __VA_ARGS__)
-#define tr_cmdline(...)         tracef(TRACE_LEVEL_CMD,     TRACE_GROUP, __VA_ARGS__)
+#define tr_info(...)            tracef(TRACE_LEVEL_INFO,    TRACE_GROUP, __VA_ARGS__)   //!< Print info message
+#define tr_debug(...)           tracef(TRACE_LEVEL_DEBUG,   TRACE_GROUP, __VA_ARGS__)   //!< Print debug message
+#define tr_warning(...)         tracef(TRACE_LEVEL_WARN,    TRACE_GROUP, __VA_ARGS__)   //!< Print warning message
+#define tr_warn(...)            tracef(TRACE_LEVEL_WARN,    TRACE_GROUP, __VA_ARGS__)   //!< Alternative warning message
+#define tr_error(...)           tracef(TRACE_LEVEL_ERROR,   TRACE_GROUP, __VA_ARGS__)   //!< Print Error Message
+#define tr_err(...)             tracef(TRACE_LEVEL_ERROR,   TRACE_GROUP, __VA_ARGS__)   //!< Alternative error message
+#define tr_cmdline(...)         tracef(TRACE_LEVEL_CMD,     TRACE_GROUP, __VA_ARGS__)   //!< Special print for cmdline. See more from TRACE_LEVEL_CMD -level
 
+/** Possible to skip all traces in compile time */
 #if defined(FEA_TRACE_SUPPORT) || defined(HAVE_DEBUG) /*backward compatible*/
 
 /** 3 upper bits are trace modes related,
@@ -95,12 +103,13 @@ extern "C" {
 #if defined  __GNUC__ || defined __CC_ARM
 /**
  * Initialize trace functionality
+ * @return 0 when all success, otherwise non zero
  */
-int trace_init(void);
+int trace_init( void );
 /**
  * Free trace memory
  */
-void trace_free(void);
+void trace_free( void );
 /**
  *  Set trace configurations
  *  Possible parameters:
@@ -117,11 +126,16 @@ void trace_free(void);
  *   TRACE_ACTIVE_LEVEL_CMD
  *   TRACE_LEVEL_NONE - to deactivate all traces
  *
+ * @param config  Byte size Bit-mask. Bits are descripted above.
  * usage e.g.
- *  set_trace_config( TRACE_ACTIVE_LEVEL_ALL|TRACE_MODE_COLOR )
+ * @code
+ *  set_trace_config( TRACE_ACTIVE_LEVEL_ALL|TRACE_MODE_COLOR );
+ * @endcode
  */
 void set_trace_config(uint8_t config);
-/** get trace configurations */
+/** get trace configurations 
+ * @return trace configuration byte
+ */
 uint8_t get_trace_config(void);
 /**
  * Set trace prefix function
@@ -131,7 +145,7 @@ uint8_t get_trace_config(void);
  *   char* trace_time(){ return "rtc-time-in-string"; }
  *   set_trace_prefix_function( &trace_time );
  */
-void set_trace_prefix_function(char *(*pref_f)(size_t));
+void set_trace_prefix_function( char* (*pref_f)(size_t) );
 /**
  * Set trace suffix function
  * suffix -function return string with null terminated
@@ -140,34 +154,41 @@ void set_trace_prefix_function(char *(*pref_f)(size_t));
  *   char* trace_suffix(){ return " END"; }
  *   set_trace_suffix_function( &trace_suffix );
  */
-void set_trace_suffix_function(char *(*suffix_f)(void));
+void set_trace_suffix_function(char* (*suffix_f)(void) );
 /**
  * Set trace print function
- * By default, trace module print with printf() function,
+ * By default, trace module print using printf() function,
  * but with this you can write own print function,
  * for e.g. to other IO device.
  */
-void set_trace_print_function(void (*print_f)(const char *));
+void set_trace_print_function( void (*print_f)(const char*) );
 /**
- * Set trace print function for TRACE_LEVEL_CMD
+ * Set trace print function for tr_cmdline()
  */
-void set_trace_cmdprint_function(void (*printf)(const char *));
+void set_trace_cmdprint_function( void (*printf)(const char*) );
 /**
- * exclude filter. when trace group contains text in filter,
- * trace print will be ignored
+ * When trace group contains text in filters,
+ * trace print will be ignored.
+ * e.g.: 
+ *  set_trace_exclude_filters("mygr");
+ *  tracef(TRACE_ACTIVE_LEVEL_DEBUG, "ougr", "This is not printed");
  */
-void set_trace_exclude_filters(char *filters);
+void set_trace_exclude_filters(char* filters);
 /** get trace exclude filters
  */
-const char *get_trace_exclude_filters(void);
+const char* get_trace_exclude_filters(void);
 /**
- * include filter. when trace group contains text in filter,
- * trace will be printed
+ * When trace group contains text in filter,
+ * trace will be printed.
+ * e.g.:
+ *  set_trace_include_filters("mygr");
+ *  tracef(TRACE_ACTIVE_LEVEL_DEBUG, "mygr", "Hi There");
+ *  tracef(TRACE_ACTIVE_LEVEL_DEBUG, "grp2", "This is not printed");
  */
-void set_trace_include_filters(char *filters);
+void set_trace_include_filters(char* filters);
 /** get trace include filters
  */
-const char *get_trace_include_filters(void);
+const char* get_trace_include_filters(void);
 /**
  * General trace function
  * This should be used every time when user want to print out something important thing
@@ -179,11 +200,11 @@ const char *get_trace_include_filters(void);
  * @param fmt    trace format (like printf)
  * @param ...    variable arguments related to fmt
  */
-void tracef(uint8_t dlevel, const char *grp, const char *fmt, ...) __attribute__((__format__(__printf__, 3, 4)));
+void tracef(uint8_t dlevel, const char* grp, const char *fmt, ...) __attribute__ ((__format__(__printf__, 3, 4)));
 /**
  *  Get last trace from buffer
  */
-const char *trace_last(void);
+const char* trace_last(void);
 /**
  * tracef helping function for convert ipv6
  * table to human readable string.
@@ -194,7 +215,7 @@ const char *trace_last(void);
  * @param add_ptr  IPv6 Address pointer
  * @return temporary buffer where ipv6 is in string format
  */
-char *trace_ipv6(const void *addr_ptr);
+char* trace_ipv6(const void *addr_ptr);
 /**
  * tracef helping function for print ipv6 prefix
  * usage e.g.
@@ -205,7 +226,7 @@ char *trace_ipv6(const void *addr_ptr);
  * @param prefix_len    prefix length
  * @return temporary buffer where ipv6 is in string format
  */
-char *trace_ipv6_prefix(const uint8_t *prefix, uint8_t prefix_len);
+char* trace_ipv6_prefix(const uint8_t *prefix, uint8_t prefix_len);
 /**
  * tracef helping function for convert hex-array to string.
  * usage e.g.
@@ -216,49 +237,49 @@ char *trace_ipv6_prefix(const uint8_t *prefix, uint8_t prefix_len);
  * @param len  buffer length
  * @return temporary buffer where string copied
  */
-char *trace_array(const uint8_t *buf, uint16_t len);
+char* trace_array(const uint8_t* buf, uint16_t len);
 
 
-/**
+/*
  * obsolete - only because of backward compatible reason
  * As soon as all these functions are replaced by new tracef() function, these can be removed.
  */
 
+/** obsolete function */
+void debugf(const char *fmt, ...) __attribute__ ((__format__(__printf__, 1, 2)));   //!< obsolete function
+void debug(const char *s);                                                          //!< obsolete function
+void debug_put(char c);                                                             //!< obsolete function
+void debug_hex(uint8_t x);                                                          //!< obsolete function
+void debug_int(int i);                                                              //!< obsolete function
+void printf_array(const void *buf, uint16_t len);                                   //!< obsolete function
+void printf_string(const void *buf, uint16_t len);                                  //!< obsolete function
+void printf_ipv6_address(const void *addr);                                         //!< obsolete function
 
-void debugf(const char *fmt, ...) __attribute__((__format__(__printf__, 1, 2)));
-void debug(const char *s);
-void debug_put(char c);
-void debug_hex(uint8_t x);
-void debug_int(int i);
-void printf_array(const void *buf, uint16_t len);
-void printf_string(const void *buf, uint16_t len);
-void printf_ipv6_address(const void *addr);
-
-#else
-int trace_init(void);
-void trace_free(void);
+#else //__GNUC__ || __CC_ARM
+int trace_init( void );
+void trace_free( void );
 void set_trace_config(uint8_t config);
-void set_trace_prefix_function(char *(*pref_f)(size_t));
-void set_trace_print_function(void (*print_f)(const char *));
-void set_trace_cmdprint_function(void (*printf)(const char *));
-void set_trace_exclude_filters(char *filters);
-const char *get_trace_exclude_filters(void);
-void set_trace_include_filters(char *filters);
-const char *get_trace_include_filters(void);
-void tracef(uint8_t dlevel, const char *grp, const char *fmt, ...);
-char *trace_ipv6(const void *addr_ptr);
-char *trace_array(const uint8_t *buf, uint16_t len);
-char *trace_ipv6_prefix(const uint8_t *prefix, uint8_t prefix_len);
+void set_trace_prefix_function( char* (*pref_f)(size_t) );
+void set_trace_print_function( void (*print_f)(const char*) );
+void set_trace_cmdprint_function( void (*printf)(const char*) );
+void set_trace_exclude_filters(char* filters);
+const char* get_trace_exclude_filters(void);
+void set_trace_include_filters(char* filters);
+const char* get_trace_include_filters(void);
+void tracef(uint8_t dlevel, const char* grp, const char *fmt, ...);
+char* trace_ipv6(const void *addr_ptr);
+char* trace_array(const uint8_t* buf, uint16_t len);
+char* trace_ipv6_prefix(const uint8_t *prefix, uint8_t prefix_len);
 
-//obsolete
-void debugf(const char *fmt, ...);
-void debug(const char *s);
-void debug_put(char c);
-void debug_hex(uint8_t x);
-void debug_int(int i);
-void printf_array(const void *buf, uint16_t len);
-void printf_string(const void *buf, uint16_t len);
-void printf_ipv6_address(const void *addr);
+//obsolete functions:
+void debugf(const char *fmt, ...);                  
+void debug(const char *s);                          
+void debug_put(char c);                             
+void debug_hex(uint8_t x);                          
+void debug_int(int i);                              
+void printf_array(const void *buf, uint16_t len);   
+void printf_string(const void *buf, uint16_t len);  
+void printf_ipv6_address(const void *addr);         
 
 #endif
 
