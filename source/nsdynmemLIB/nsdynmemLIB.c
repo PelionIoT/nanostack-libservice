@@ -36,7 +36,7 @@ typedef enum mem_stat_update_t {
 
 
 static mem_stat_t *mem_stat_info_ptr = 0;
-#endif
+
 
 static void heap_failure(heap_fail_t reason)
 {
@@ -44,6 +44,8 @@ static void heap_failure(heap_fail_t reason)
         heap_failure_callback(reason);
     }
 }
+
+#endif
 
 void ns_dyn_mem_init(uint8_t *heap, uint16_t h_size, void (*passed_fptr)(heap_fail_t), mem_stat_t *info_ptr)
 {
@@ -140,8 +142,6 @@ static int heap_alloc_internal_check(int16_t alloc_size)
     }
     return temp_sector;
 }
-#endif
-
 
 static int8_t ns_sector_validate(int *sector_start, int direction)
 {
@@ -170,6 +170,7 @@ static int8_t ns_sector_validate(int *sector_start, int direction)
     }
     return ret_val;
 }
+#endif
 
 void *ns_dyn_mem_alloc(int16_t alloc_size)
 {
@@ -270,15 +271,11 @@ void *ns_dyn_mem_alloc(int16_t alloc_size)
     }
     return retval;
 #else
-    uint32_t value;
-
     void *retval = 0;
     if (alloc_size) {
         platform_enter_critical();
         retval = malloc(alloc_size);
         platform_exit_critical();
-    } else {
-        heap_free_corrupt();
     }
     return retval;
 #endif
@@ -383,23 +380,12 @@ void *ns_dyn_mem_temporary_alloc(int16_t alloc_size)
     return retval;
 
 #else
-    uint32_t value;
 
     void *retval = 0;
     if (alloc_size) {
         platform_enter_critical();
         retval = malloc(alloc_size);
         platform_exit_critical();
-        if (retval) {
-            value = (uint32_t) retval;
-            if (value < 0x20000000 || value > 0x2001FFFF) {
-                tracef(TRACE_LEVEL_ERROR, "mem", "Malloc fail");
-                heap_free_corrupt();
-                return 0;
-            }
-        }
-    } else {
-        heap_free_corrupt();
     }
     return retval;
 #endif
@@ -409,7 +395,7 @@ void heap_df(void)
 {
 
 }
-
+#ifndef STANDARD_MALLOC
 static void ns_free_and_merge_next_sector(int *cur_sector, int size)
 {
     int *end_sector;
@@ -472,6 +458,7 @@ static void ns_merge_prev_sector(int *cur_sector)
         *cur_sector = -(prev_len);
     }
 }
+#endif
 
 #ifdef STANDARD_MALLOC
 #ifdef USE_IAR
@@ -559,14 +546,12 @@ uint8_t heap_cor_scan(void)
                 jump_size = size;
             }
             if (jump_size == 0) {
-                heap_free_corrupt();
                 platform_exit_critical();
                 return 0;
             }
             ptr += jump_size;
             tail_size = *ptr++;
             if (size != tail_size) {
-                heap_free_corrupt();
                 platform_exit_critical();
                 return 0;
             }
