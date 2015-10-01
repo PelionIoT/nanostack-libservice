@@ -25,6 +25,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "ns_types.h"
+
 /*!
  * \enum heap_fail_t
  * \brief Dynamically heap system failure call back event types.
