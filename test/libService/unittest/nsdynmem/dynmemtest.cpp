@@ -54,6 +54,7 @@ TEST(dynmem, different_sizes)
         ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
         CHECK(info.heap_sector_size >= (size-4)); // Allow 4 bytes of alignment to happend
         CHECK(!heap_have_failed());
+        CHECK(ns_dyn_mem_alloc(10)); // test allocatio works
         free(heap);
     }
 }
@@ -192,5 +193,105 @@ TEST(dynmem, diff_sizes)
     }
     CHECK(!heap_have_failed()); // Mem full is not failure
     CHECK(info.heap_sector_alloc_cnt == 0);
+    free(heap);
+}
+
+TEST(dynmem, double_free)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    void *p;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    p = ns_dyn_mem_alloc(100);
+    CHECK(p);
+    ns_dyn_mem_free(p);
+    CHECK(!heap_have_failed());
+    ns_dyn_mem_free(p);
+    CHECK(heap_have_failed());
+    CHECK(NS_DYN_MEM_DOUBLE_FREE == current_heap_error);
+    free(heap);
+}
+
+TEST(dynmem, middle_free)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    void *p[3];
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    for (int i=0; i<3; i++) {
+        p[i] = ns_dyn_mem_alloc(100);
+        CHECK(p);
+    }
+    ns_dyn_mem_free(p[1]);
+    CHECK(!heap_have_failed());
+    ns_dyn_mem_free(p[0]);
+    CHECK(!heap_have_failed());
+    ns_dyn_mem_free(p[2]);
+    CHECK(!heap_have_failed());
+    free(heap);
+}
+
+TEST(dynmem, over_by_one)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    uint8_t *p;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    p = (uint8_t *)ns_dyn_mem_alloc(100);
+    CHECK(p);
+    p[100] = 0xff; //Write one over the reserved size
+    ns_dyn_mem_free(p);
+    CHECK(heap_have_failed());
+    CHECK(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED == current_heap_error);
+    free(heap);
+}
+
+TEST(dynmem, not_from_this_heap)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    uint8_t *p;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    p = (uint8_t *)ns_dyn_mem_alloc(100);
+    CHECK(p);
+    ns_dyn_mem_free(&heap[-1]);
+    CHECK(heap_have_failed());
+    CHECK(NS_DYN_MEM_POINTER_NOT_VALID == current_heap_error);
+    reset_heap_error();
+    ns_dyn_mem_free(&heap[1001]);
+    CHECK(heap_have_failed());
+    CHECK(NS_DYN_MEM_POINTER_NOT_VALID == current_heap_error);
+    free(heap);
+}
+
+TEST(dynmem, free_on_empty_heap)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    uint8_t *p;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    ns_dyn_mem_free(&heap[1]);
+    CHECK(heap_have_failed());
+    CHECK(NS_DYN_MEM_POINTER_NOT_VALID == current_heap_error);
     free(heap);
 }
