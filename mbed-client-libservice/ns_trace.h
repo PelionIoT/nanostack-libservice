@@ -97,7 +97,7 @@ extern "C" {
 #define tr_cmdline(...)         tracef(TRACE_LEVEL_CMD,     TRACE_GROUP, __VA_ARGS__)   //!< Special print for cmdline. See more from TRACE_LEVEL_CMD -level
 
 /** Possible to skip all traces in compile time */
-#if defined(FEA_TRACE_SUPPORT) || defined(HAVE_DEBUG) /*backward compatible*/
+#if defined(FEA_TRACE_SUPPORT) || defined(HAVE_DEBUG) || !defined(NDEBUG) /*backward compatible*/
 
 #if defined  __GNUC__ || defined __CC_ARM
 /**
