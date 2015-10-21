@@ -271,14 +271,14 @@ char* trace_array(const uint8_t* buf, uint16_t len);
 char* trace_ipv6_prefix(const uint8_t *prefix, uint8_t prefix_len);
 
 //obsolete functions:
-void debugf(const char *fmt, ...);                  
-void debug(const char *s);                          
-void debug_put(char c);                             
-void debug_hex(uint8_t x);                          
-void debug_int(int i);                              
-void printf_array(const void *buf, uint16_t len);   
-void printf_string(const void *buf, uint16_t len);  
-void printf_ipv6_address(const void *addr);         
+void debugf(const char *fmt, ...);
+void debug(const char *s);
+void debug_put(char c);
+void debug_hex(uint8_t x);
+void debug_int(int i);
+void printf_array(const void *buf, uint16_t len);
+void printf_string(const void *buf, uint16_t len);
+void printf_ipv6_address(const void *addr);
 
 #endif
 
@@ -286,7 +286,7 @@ void printf_ipv6_address(const void *addr);
 #else /*FEA_TRACE_SUPPORT*/
 
 // trace functionality not supported
-#define trace_init(...)                ((void) 0)
+#define trace_init(...)                ((int) 0)
 #define trace_free(...)                ((void) 0)
 #define set_trace_config(...)          ((void) 0)
 #define set_trace_prefix_function(...) ((void) 0)
@@ -294,13 +294,13 @@ void printf_ipv6_address(const void *addr);
 #define set_trace_cmdprint_function(...)  ((void) 0)
 #define set_trace_exclude_filters(...) ((void) 0)
 #define set_trace_include_filters(...) ((void) 0)
-#define get_trace_exclude_filters(...) ((void) 0)
-#define get_trace_include_filters(...) ((void) 0)
+#define get_trace_exclude_filters(...) ((const char*) 0)
+#define get_trace_include_filters(...) ((const char*) 0)
 
 #define tracef(...)                    ((void) 0)
-#define trace_ipv6(...)                ((void) 0)
-#define trace_array(...)               ((void) 0)
-#define trace_ipv6_prefix(...)         ((void) 0)
+#define trace_ipv6(...)                ((char*) 0)
+#define trace_array(...)               ((char*) 0)
+#define trace_ipv6_prefix(...)         ((char*) 0)
 
 //obsolete
 #define debugf(...)                    ((void) 0)
