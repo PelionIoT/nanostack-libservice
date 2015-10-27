@@ -1,6 +1,6 @@
-{
+1{
   "name": "nanostack-libservice",
-  "version": "3.0.7",
+  "version": "3.0.8",
   "description": "Helper libraries for mbed-client and 6LoWPAN stack.",
   "keywords": [
     "libservice"
