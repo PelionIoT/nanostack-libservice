@@ -66,3 +66,21 @@ uint8_t *bitcopy(uint8_t *restrict dst, const uint8_t *restrict src, uint_fast8_
 
     return dst;
 }
+
+uint8_t *bitcopy0(uint8_t *restrict dst, const uint8_t *restrict src, uint_fast8_t bits)
+{
+    uint_fast8_t bytes = bits / 8;
+    bits %= 8;
+
+    if (bytes) {
+        dst = (uint8_t *) memcpy(dst, src, bytes) + bytes;
+        src += bytes;
+    }
+
+    if (bits) {
+        uint_fast8_t split_bit = context_split_mask(bits);
+        *dst = (*src & split_bit);
+    }
+
+    return dst;
+}
