@@ -117,49 +117,65 @@ typedef struct ns_list {
  * ~~~
  */
 #define NS_LIST_HEAD(entry_type, field) \
+    NS_LIST_HEAD_BY_OFFSET_(entry_type, offsetof(entry_type, field))
+
+/** \brief Declare a list head type for an incomplete entry type.
+ *
+ * This declares a list head, similarly to NS_LIST_HEAD(), but unlike that
+ * this can be used in contexts where the entry type may be incomplete.
+ *
+ * To use this, the link pointer must be the first member in the
+ * actual complete structure. This is NOT checked - the definition of the
+ * element should probably test NS_STATIC_ASSERT(offsetof(type, link) == 0)
+ * if outside users are known to be using NS_LIST_HEAD_INCOMPLETE().
+ * ~~~
+ *     struct opaque;
+ *     NS_LIST_HEAD_INCOMPLETE(struct opaque) opaque_list;
+ * ~~~
+ */
+#define NS_LIST_HEAD_INCOMPLETE(entry_type) \
+    NS_LIST_HEAD_BY_OFFSET_(entry_type, 0)
+
+/// \privatesection
+/** \brief Internal macro defining a list head, given the offset to the link pointer
+ * The +1 allows for link_offset being 0 - we can't declare a 0-size array
+ */
+#define NS_LIST_HEAD_BY_OFFSET_(entry_type, link_offset) \
 union \
 { \
     ns_list_t slist; \
-    NS_STATIC_ASSERT(offsetof(entry_type, field) <= UINT_FAST8_MAX, "link offset too large") \
-    char (*offset)[offsetof(entry_type, field)]; \
+    NS_STATIC_ASSERT(link_offset <= UINT_FAST8_MAX, "link offset too large") \
+    char (*offset)[link_offset + 1]; \
     entry_type *type; \
 }
 
-/// \privatesection
 /** \brief Get offset of link field in entry.
  * \return `(ns_list_offset_t)` The offset of the link field for entries on the specified list
  */
-#define NS_LIST_OFFSET_(list) ((ns_list_offset_t) sizeof *(list)->offset)
+#define NS_LIST_OFFSET_(list) ((ns_list_offset_t) (sizeof *(list)->offset - 1))
 
-/** \brief Get the entry type.
- * \def NS_LIST_TYPE_
+/** \brief Get the entry pointer type.
+ * \def NS_LIST_PTR_TYPE_
  *
- * \return The type of entry on the specified list.
+ * \return An unqualified pointer type to an entry on the specified list.
  *
  * Only available if the compiler provides a "typeof" operator.
  */
 #if defined __cplusplus && __cplusplus >= 201103L
-#define NS_LIST_TYPE_(list) decltype(*(list)->type)
+#define NS_LIST_PTR_TYPE_(list) decltype((list)->type)
 #elif defined __GNUC__
-#define NS_LIST_TYPE_(list) __typeof__(*(list)->type)
+#define NS_LIST_PTR_TYPE_(list) __typeof__((list)->type)
 #endif
 
 /** \brief Check for compatible pointer types
  *
- * Although this can be done portably, the GCC custom version is provided to
- * produce a clearer diagnostic, and it produces an error rather than a warning.
- *
- * The portable version will produce a diagnostic about a pointer mismatch on
+ * This test will produce a diagnostic about a pointer mismatch on
  * the == inside the sizeof operator. For example ARM/Norcroft C gives the error:
  *
  *     operand types are incompatible ("entry_t *" and "other_t *")
  */
 #ifdef CPPCHECK
 #define NS_PTR_MATCH_(a, b, str) ((void) 0)
-#elif defined __GNUC__
-#define NS_PTR_MATCH_(a, b, str) __extension__ \
-    ({ NS_STATIC_ASSERT(__builtin_types_compatible_p(__typeof__ (*(a)), __typeof__ (*(b))), \
-                        str) })
 #else
 #define NS_PTR_MATCH_(a, b, str) ((void) sizeof ((a) == (b)))
 #endif
@@ -175,8 +191,8 @@ union \
  * in case some day it works. Some compilers may still warn if this is
  * assigned to a different type.
  */
-#ifdef NS_LIST_TYPE_
-#define NS_LIST_TYPECAST_(list, val) ((NS_LIST_TYPE_(list) *) (val))
+#ifdef NS_LIST_PTR_TYPE_
+#define NS_LIST_TYPECAST_(list, val) ((NS_LIST_PTR_TYPE_(list)) (val))
 #else
 #define NS_LIST_TYPECAST_(list, val) (0 ? (list)->type : (val))
 #endif
