@@ -98,23 +98,20 @@ typedef int_fast32_t int_fast24_t;
 #define PRIiFAST24 PRIiFAST32
 #endif
 
-/* C11's "noreturn" macro, emulated if necessary */
-#ifndef noreturn
+/* Function attribute - C11 "noreturn" or C++11 "[[noreturn]]" */
+#ifndef NS_NORETURN
 #if defined  __cplusplus && __cplusplus >= 201103L
-// noreturn is a C++11 keyword
-#elif __STDC_VERSION__ >= 201112L
-#include <stdnoreturn.h>
-/* Following lines commented because they are causing strange yotta compiling error "
-   error: '__noreturn__' was not declared in this scope". Might be GCC bug.
-*/
-//#elif defined __GNUC__
-//#define noreturn __attribute__((__noreturn__))
+#define NS_NORETURN [[noreturn]]
+#elif !defined  __cplusplus && __STDC_VERSION__ >= 201112L
+#define NS_NORETURN _Noreturn
+#elif defined __GNUC__
+#define NS_NORETURN __attribute__((__noreturn__))
 #elif defined __CC_ARM
-#define noreturn __declspec(noreturn)
+#define NS_NORETURN __declspec(noreturn)
 #elif defined __IAR_SYSTEMS_ICC__
-#define noreturn __noreturn
+#define NS_NORETURN __noreturn
 #else
-#define noreturn
+#define NS_NORETURN
 #endif
 #endif
 
