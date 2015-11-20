@@ -399,6 +399,7 @@ static void ns_free_and_merge_next_sector(int *cur_sector, int size)
     end_sector = cur_sector;
     end_sector += size + 1;
     if (end_sector != heap_main_end) {
+        memset(cur_sector+1, 0, size*2);
         end_sector++;
         next_len = *end_sector;
 
