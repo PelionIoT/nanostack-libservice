@@ -234,6 +234,13 @@ static void default_print(const char *str)
 }
 void tracef(uint8_t dlevel, const char *grp, const char *fmt, ...)
 {
+    if (m_trace.line == NULL) {
+        // Quite likely the trace_init() has not been called yet,
+        // but it is better to just shut up instead of crashing with
+        // null pointer dereference. 
+        return;
+    }
+    
     m_trace.line[0] = 0; //by default trace is empty
     if (trace_skip(dlevel, grp) || fmt == 0 || grp == 0) {
         return;
