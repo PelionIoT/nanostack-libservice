@@ -24,7 +24,8 @@
 #include "ip6string.h"
 #include "common_functions.h"
 
-#if defined(_WIN32) || defined(__unix__) || defined(__unix) || defined(unix)
+#if defined(_WIN32) || defined(__unix__) || defined(__unix) || defined(unix) || (defined(YOTTA_CFG) && !defined(NDEBUG))
+//NOTE! It is not allowed to use this MEM_ALLOC/MEM_FREE from interrupt context.
 #ifndef MEM_ALLOC
 #define MEM_ALLOC malloc
 #endif

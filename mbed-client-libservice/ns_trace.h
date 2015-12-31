@@ -101,12 +101,12 @@ extern "C" {
 
 #if defined  __GNUC__ || defined __CC_ARM
 /**
- * Initialize trace functionality
+ * Initialize trace functionality. This method must be called from application process.
  * @return 0 when all success, otherwise non zero
  */
 int trace_init( void );
 /**
- * Free trace memory
+ * Free trace memory. This method must be called from application process.
  */
 void trace_free( void );
 /**
