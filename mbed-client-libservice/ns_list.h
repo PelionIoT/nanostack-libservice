@@ -498,8 +498,8 @@ typedef struct ns_list_link {
  * \param list `(list_t *)`  Pointer to list - evaluated multiple times.
  */
 #define ns_list_foreach_safe(type, e, list) \
-    for (type *e = ns_list_get_first(list), *_next; \
-        e && (_next = ns_list_get_next(list, e), true); e = _next)
+    for (type *e = ns_list_get_first(list), *_next##e; \
+        e && (_next##e = ns_list_get_next(list, e), true); e = _next##e)
 
 /** \brief Iterate backwards over a list.
  *
@@ -515,8 +515,8 @@ typedef struct ns_list_link {
  * Iterating forwards is *slightly* more efficient.
  */
 #define ns_list_foreach_reverse_safe(type, e, list) \
-    for (type *e = ns_list_get_last(list), *_next; \
-        e && (_next = ns_list_get_previous(list, e), true); e = _next)
+    for (type *e = ns_list_get_last(list), *_next##e; \
+        e && (_next##e = ns_list_get_previous(list, e), true); e = _next##e)
 
 /** \hideinitializer \brief Count entries on a list
  *
