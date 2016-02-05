@@ -117,14 +117,14 @@ typedef int_fast32_t int_fast24_t;
 
 /* C11's "alignas" macro, emulated for integer expressions if necessary */
 #ifndef __alignas_is_defined
-#if __STDC_VERSION__ >= 201112L || (defined __cplusplus && __cplusplus >= 201103L)
-#include <stdalign.h>
+#if defined __CC_ARM || defined __TASKING__
+#define alignas(n) __align(n)
+#define __alignas_is_defined 1
 #elif defined __GNUC__
 #define alignas(n) __attribute__((__aligned__(n)))
 #define __alignas_is_defined 1
-#elif defined __CC_ARM || defined __TASKING__
-#define alignas(n) __align(n)
-#define __alignas_is_defined 1
+#elif (__STDC_VERSION__ >= 201112L) || (defined __cplusplus && __cplusplus >= 201103L)
+#include <stdalign.h>
 #elif defined __IAR_SYSTEMS_ICC__
 /* Does this really just apply to the next variable? */
 #define alignas(n) __Alignas(data_alignment=n)
