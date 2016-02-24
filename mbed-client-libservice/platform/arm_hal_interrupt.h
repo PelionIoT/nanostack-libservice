@@ -30,6 +30,24 @@ extern void platform_enter_critical(void);
  */
 extern void platform_exit_critical(void);
 
+/**
+ * \brief This function increments the disable IRQ counter.
+ * The function must be called inside interrupt routines
+ * before any routine that uses platform_enter_critical()
+ * is called.
+ *
+ * This routine may not be need to do anything on some platforms,
+ * but requiring the call to be made before using
+ * platform_enter_critical() in an interrupt can simplify some
+ * implementations of platform_enter/exit_critical().
+ */
+extern void platform_interrupts_disabled(void);
+
+/**
+ * \brief This function decrements the disable IRQ counter.
+ */
+extern void platform_interrupts_enabling(void);
+
 #ifdef __cplusplus
 }
 #endif
