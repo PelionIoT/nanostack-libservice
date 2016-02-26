@@ -51,7 +51,7 @@
 #define DEFAULT_TRACE_LINE_LENGTH     1024
 /** default max temporary buffer size in bytes, used in
     trace_ipv6, trace_array and trace_strn */
-#define DEFAULT_TRACE_TMP_LINE_LEN        128
+#define DEFAULT_TRACE_TMP_LINE_LEN        512
 /** default max filters (include/exclude) length in bytes */
 #define DEFAULT_TRACE_FILTER_LENGTH       24
 
@@ -239,11 +239,13 @@ void tracef(uint8_t dlevel, const char *grp, const char *fmt, ...)
         // Quite likely the trace_init() has not been called yet,
         // but it is better to just shut up instead of crashing with
         // null pointer dereference. 
+        m_trace.tmp_data_ptr = m_trace.tmp_data;
         return;
     }
     
     m_trace.line[0] = 0; //by default trace is empty
     if (trace_skip(dlevel, grp) || fmt == 0 || grp == 0) {
+        m_trace.tmp_data_ptr = m_trace.tmp_data;
         return;
     }
     if ((m_trace.trace_config & TRACE_MASK_LEVEL) &  dlevel) {
@@ -395,8 +397,8 @@ void tracef(uint8_t dlevel, const char *grp, const char *fmt, ...)
             m_trace.printf(m_trace.line);
         }
         //return tmp data pointer back to the beginning
-        m_trace.tmp_data_ptr = m_trace.tmp_data;
     }
+    m_trace.tmp_data_ptr = m_trace.tmp_data;
 }
 const char *trace_last(void)
 {
@@ -431,7 +433,7 @@ char *trace_ipv6_prefix(const uint8_t *prefix, uint8_t prefix_len)
     if (str == NULL) {
         return "";
     }
-    if (bLeft < 43) {
+    if (bLeft < 40 + 1 + 3 + 1) {// "ipv6 addr" + "/" + "128" + nul
         return "";
     }
 
@@ -461,6 +463,9 @@ char *trace_array(const uint8_t *buf, uint16_t len)
     }
     if (buf == NULL) {
         return "<null>";
+    }
+    if (!bLeft) {
+        return "";
     }
     wptr = str;
     wptr[0] = 0;
