@@ -456,7 +456,7 @@ char *trace_array(const uint8_t *buf, uint16_t len)
     int i, retval, bLeft = tmp_data_left();
     char *str, *wptr;
     str = m_trace.tmp_data_ptr;
-    if (str == NULL) {
+    if (str == NULL || bLeft == 0) {
         return "";
     }
     if (buf == NULL) {
@@ -465,8 +465,10 @@ char *trace_array(const uint8_t *buf, uint16_t len)
     wptr = str;
     wptr[0] = 0;
     const uint8_t *ptr = buf;
+    char overflow = 0;
     for (i = 0; i < len; i++) {
-        if (bLeft <= 0) {
+        if (bLeft <= 3) {
+            overflow = 1;
             break;
         }
         retval = snprintf(wptr, bLeft, "%02x:", *ptr++);
@@ -477,7 +479,14 @@ char *trace_array(const uint8_t *buf, uint16_t len)
         wptr += retval;
     }
     if (wptr > str) {
-        *(wptr - 1) = 0;    //null to replace last ':' character
+        if( overflow ) {
+            // replace last character as 'star',
+            // which indicate buffer len is not enough
+            *(wptr - 1) = '*';
+        } else {
+            //null to replace last ':' character
+            *(wptr - 1) = 0;
+        }
     }
     m_trace.tmp_data_ptr = wptr;
     return str;
