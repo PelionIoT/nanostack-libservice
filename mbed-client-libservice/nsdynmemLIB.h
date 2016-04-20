@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 ARM Limited. All rights reserved.
+ * Copyright (c) 2014-2016 ARM Limited. All rights reserved.
  * SPDX-License-Identifier: Apache-2.0
  * Licensed under the Apache License, Version 2.0 (the License); you may
  * not use this file except in compliance with the License.
@@ -96,6 +96,20 @@ extern void *ns_dyn_mem_temporary_alloc(int16_t alloc_size);
   * \return >0, Pointer to allocated data sector.
   */
 extern void *ns_dyn_mem_alloc(int16_t alloc_size);
+
+/**
+  * \brief Get pointer to the current mem_stat_t set via ns_dyn_mem_init.
+  *
+  * Get pointer to the statistics information, if one is set during the
+  * initialization. This may be useful for statistics collection purposes.
+  *
+  * Note: the caller may not modify the returned structure.
+  *
+  * \return NULL, no mem_stat_t was given on initialization
+  * \return !=0, Pointer to mem_stat_t.
+  */
+extern const mem_stat_t *ns_dyn_mem_get_mem_stat(void);
+
 #ifdef __cplusplus
 }
 #endif
