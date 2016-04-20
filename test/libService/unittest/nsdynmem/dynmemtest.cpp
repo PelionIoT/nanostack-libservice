@@ -41,6 +41,7 @@ TEST(dynmem, init)
     ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
     CHECK(info.heap_sector_size >= (size-4)); // Allow 4 bytes of alignment to happend
     CHECK(!heap_have_failed());
+    CHECK(ns_dyn_mem_get_mem_stat() == &info);
     free(heap);
 }
 

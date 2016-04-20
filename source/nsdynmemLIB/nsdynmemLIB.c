@@ -84,6 +84,15 @@ void ns_dyn_mem_init(uint8_t *heap, uint16_t h_size, void (*passed_fptr)(heap_fa
     heap_failure_callback = passed_fptr;
 }
 
+const mem_stat_t *ns_dyn_mem_get_mem_stat(void)
+{
+#ifndef STANDARD_MALLOC
+    return mem_stat_info_ptr;
+#else
+    return NULL;
+#endif
+}
+
 #ifndef STANDARD_MALLOC
 void dev_stat_update(mem_stat_update_t type, int16_t size)
 {
