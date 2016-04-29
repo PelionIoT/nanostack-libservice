@@ -1,0 +1,3 @@
+[submodule "source/mbed-trace"]
+	path = source/mbed-trace
+	url = git@github.com:ARMmbed/mbed-trace.git
