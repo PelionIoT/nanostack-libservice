@@ -144,7 +144,9 @@ typedef struct ns_list {
 union \
 { \
     ns_list_t slist; \
+    NS_FUNNY_COMPARE_OK \
     NS_STATIC_ASSERT(link_offset <= UINT_FAST8_MAX, "link offset too large") \
+    NS_FUNNY_COMPARE_RESTORE \
     char (*offset)[link_offset + 1]; \
     entry_type *type; \
 }

@@ -245,6 +245,17 @@ typedef int_fast32_t int_fast24_t;
 #define NS_FUNNY_INTPTR_RESTORE
 #endif
 
+/** \brief Pragma to suppress warnings about always true/false comparisons
+ */
+#if defined __GNUC__ && !defined __CC_ARM
+#define NS_FUNNY_COMPARE_OK         _Pragma("GCC diagnostic push") \
+                                    _Pragma("GCC diagnostic ignored \"-Wtype-limits\"")
+#define NS_FUNNY_COMPARE_RESTORE    _Pragma("GCC diagnostic pop")
+#else
+#define NS_FUNNY_COMPARE_OK
+#define NS_FUNNY_COMPARE_RESTORE
+#endif
+
 /** \brief Convert pointer to member to pointer to containing structure */
 #define NS_CONTAINER_OF(ptr, type, member) \
     ((type *) ((char *) (ptr) - offsetof(type, member)))
