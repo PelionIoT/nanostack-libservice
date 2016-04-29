@@ -150,6 +150,17 @@ NS_INLINE uint16_t common_read_16_bit(const uint8_t data_buf[__static 2]);
 NS_INLINE uint8_t *common_write_16_bit_inverse(uint16_t value, uint8_t ptr[__static 2]);
 
 /*
+ * Common read 16-bit variable from 8-bit pointer.
+ *
+ * Read 16 bits in little-endian byte order.
+ *
+ * \param data_buf pointer where data to be read
+ *
+ * \return 16-bit variable
+ */
+NS_INLINE uint16_t common_read_16_bit_inverse(const uint8_t data_buf[__static 2]);
+
+/*
  * Count bits in a byte
  *
  * \param byte byte to inspect
@@ -400,6 +411,14 @@ COMMON_FUNCTIONS_FN uint8_t *common_write_16_bit_inverse(uint16_t value, uint8_t
     *ptr++ = value;
     *ptr++ = value >> 8;
     return ptr;
+}
+
+COMMON_FUNCTIONS_FN uint16_t common_read_16_bit_inverse(const uint8_t data_buf[__static 2])
+{
+    uint16_t temp_16;
+    temp_16 = *data_buf++;
+    temp_16 += (uint16_t)(*data_buf++) << 8;
+    return temp_16;
 }
 
 COMMON_FUNCTIONS_FN uint_fast8_t common_count_bits(uint8_t byte)
