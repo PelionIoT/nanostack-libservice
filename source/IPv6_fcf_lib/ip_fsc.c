@@ -26,7 +26,7 @@
  * alignments. The one limitation is that the 32-bit accumulator limits
  * it to basically 64K of total data.
  */
-uint16_t ip_fcf_v(uint_fast8_t count, const ns_iovec_t vec[static count])
+uint16_t ip_fcf_v(uint_fast8_t count, const ns_iovec_t vec[])
 {
     uint_fast32_t acc32 = 0;
     bool odd = false;
@@ -75,7 +75,7 @@ uint16_t ip_fcf_v(uint_fast8_t count, const ns_iovec_t vec[static count])
  * checksum 0xFFFF.
  */
 uint16_t ipv6_fcf(const uint8_t src_address[static 16], const uint8_t dest_address[static 16],
-                  uint16_t data_length, const uint8_t data_ptr[static data_length],  uint8_t next_protocol)
+                  uint16_t data_length, const uint8_t data_ptr[],  uint8_t next_protocol)
 {
     // Use gather vector to lay out IPv6 pseudo-header (RFC 2460) and data
     uint8_t hdr_data[] = { data_length >> 8, data_length, 0, next_protocol };
