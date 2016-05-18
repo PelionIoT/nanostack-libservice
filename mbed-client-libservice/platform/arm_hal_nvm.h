@@ -84,7 +84,7 @@ platform_nvm_status platform_nvm_finalize(nvm_callback *callback, void *context)
  * \return NVM_ERROR if key creation failed and callback will not be called.
  * \return Provided callback function will be called once operation is completed.
  */
-platform_nvm_status platform_nvm_key_create(nvm_callback *callback, const char *key_name, int value_len, uint32_t flags, void *context);
+platform_nvm_status platform_nvm_key_create(nvm_callback *callback, const char *key_name, uint16_t value_len, uint32_t flags, void *context);
 
 /** \brief Delete key from NMV.
  *
@@ -108,10 +108,9 @@ platform_nvm_status platform_nvm_key_delete(nvm_callback *callback, const char *
  *
  * \return NVM_OK if data writing is in progress and callback will be called.
  * \return NVM_ERROR if data writing failed and callback will not be called.
- * \return PLATFORM_NVM_KEY_NOT_FOUND if given key was not found from NVM, callback will not be called.
  * \return Provided callback function will be called once operation is completed.
  */
-platform_nvm_status platform_nvm_write(nvm_callback *callback, const char *key_name, uint8_t *data, int *data_len, void *context);
+platform_nvm_status platform_nvm_write(nvm_callback *callback, const char *key_name, const void *data, uint16_t *data_len, void *context);
 
 /** \brief Read key value from the NVM.
  *
@@ -123,10 +122,9 @@ platform_nvm_status platform_nvm_write(nvm_callback *callback, const char *key_n
  *
  * \return NVM_OK if data reading is in progress and callback will be called.
  * \return NVM_ERROR if data reading failed and callback will not be called.
- * \return PLATFORM_NVM_KEY_NOT_FOUND if given key was not found from NVM, callback will not be called.
  * \return Provided callback function will be called once operation is completed.
  */
-platform_nvm_status platform_nvm_read(nvm_callback *callback, const char *key_name, uint8_t *buf, int *buf_len, void *context);
+platform_nvm_status platform_nvm_read(nvm_callback *callback, const char *key_name, void *buf, uint16_t *buf_len, void *context);
 
 /** \brief Store changed data to the backing store. This operation will write changed data to SRAM/Flash.
  *
@@ -143,3 +141,4 @@ platform_nvm_status platform_nvm_flush(nvm_callback *callback, void *context);
 }
 #endif
 #endif /* _PLATFORM_NVM_H_ */
+
