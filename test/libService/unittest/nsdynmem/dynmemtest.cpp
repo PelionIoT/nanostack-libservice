@@ -142,6 +142,33 @@ TEST(dynmem, ns_dyn_mem_temporary_alloc)
     free(heap);
 }
 
+TEST(dynmem, test_both_allocs_with_hole_usage) {
+    uint16_t size = 48;
+    mem_stat_t info;
+    void *p[size];
+    uint8_t *heap = (uint8_t*)malloc(size);
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+
+    void *ptr = ns_dyn_mem_alloc(15);
+    void *ptr2 = ns_dyn_mem_alloc(4);
+
+    ns_dyn_mem_free(ptr);
+    ns_dyn_mem_free(ptr2);
+    CHECK(info.heap_sector_allocated_bytes == 0);
+
+    void *ptr3 = ns_dyn_mem_temporary_alloc(15);
+    void *ptr4 = ns_dyn_mem_temporary_alloc(5);
+
+    ns_dyn_mem_free(ptr3);
+    ns_dyn_mem_free(ptr4);
+    CHECK(info.heap_sector_allocated_bytes == 0);
+
+    free(heap);
+}
+
 TEST(dynmem, zero_allocate)
 {
     uint16_t size = 1000;
@@ -327,4 +354,27 @@ TEST(dynmem, not_negative_stats)
     }
     CHECK(info.heap_sector_allocated_bytes == last_value);
     free(heap);
+}
+
+TEST(dynmem, test_invalid_pointer_freed) {
+    uint16_t size = 28;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, NULL);
+    int *ptr = (int *)ns_dyn_mem_alloc(4);
+    ptr--;
+    *ptr = 16;
+    ptr++;
+    ns_dyn_mem_free(ptr);
+    CHECK(NS_DYN_MEM_POINTER_NOT_VALID == current_heap_error);
+
+    free(heap);
+}
+
+//NOTE! This test must be last!
+TEST(dynmem, uninitialized_test){
+    ns_dyn_mem_alloc(4);
+    uint8_t buf[1];
+    ns_dyn_mem_free(&buf);
 }
