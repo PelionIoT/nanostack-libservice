@@ -296,3 +296,35 @@ TEST(dynmem, free_on_empty_heap)
     CHECK(NS_DYN_MEM_POINTER_NOT_VALID == current_heap_error);
     free(heap);
 }
+
+
+TEST(dynmem, not_negative_stats)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    void *p;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    CHECK(info.heap_sector_allocated_bytes == 0);
+    ns_dyn_mem_alloc(8);
+    p = ns_dyn_mem_alloc(8);
+    ns_dyn_mem_alloc(8);
+    CHECK(info.heap_sector_allocated_bytes >= 24);
+    int16_t last_value = info.heap_sector_allocated_bytes;
+    ns_dyn_mem_free(p); // Free the middle one to leave hole for 4 byes.
+    CHECK(info.heap_sector_allocated_bytes >= 16);
+    CHECK(info.heap_sector_allocated_bytes < last_value);
+    last_value = info.heap_sector_allocated_bytes;
+    // Try to make allocator fill a hole bigger that requested size,
+    // run alloc&free for 10 times to make it visible if the stats will not include
+    // the overhead. Previously this was leading a negative value in allocated sector count.
+    for (int i=0; i<10; i++) {
+        p = ns_dyn_mem_alloc(1);
+        ns_dyn_mem_free(p);
+    }
+    CHECK(info.heap_sector_allocated_bytes == last_value);
+    free(heap);
+}
