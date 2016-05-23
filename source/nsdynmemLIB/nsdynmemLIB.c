@@ -203,12 +203,10 @@ void *ns_dyn_mem_alloc(int16_t alloc_size)
                     retval = 0;
                     break;
                 } else if (s_size < 0) {
+                    s_size = -s_size;
                     //Free
-                    if (((-s_size) >= alloc_sector)) {
+                    if (s_size >= alloc_sector) {
                         /*found block*/
-                        //Convert Current size
-                        s_size = -s_size;
-
                         if (s_size > (alloc_sector + 4)) {
                             //debug("Bigger\r\n");
                             //Set sector start len & Move pointer to Allocated data sector
@@ -223,30 +221,23 @@ void *ns_dyn_mem_alloc(int16_t alloc_size)
                             //Now set new slice start & End len fields
                             //Move pointer to New Free Sector
                             //Calculate new sector size
-                            alloc_sector += 2; //
-
-                            s_size = (s_size - alloc_sector);
+                            s_size = (s_size - alloc_sector - 2);
 
                             *ptr-- = -(s_size);
                             ptr -= s_size;
                             *ptr = -(s_size);
-                            if (mem_stat_info_ptr) {
-                                alloc_sector -= 2;
-                            }
                         } else {
                             //debug("USE Same\r\n");
                             //Set sector start len & Move pointer to Allocated data sector
                             *ptr = s_size;
                             ptr -= s_size;
+                            alloc_sector = s_size;
                             retval = (void *) ptr;
                             ptr--;
                             //Set End length
                             *ptr-- = s_size;
                         }
                         break;
-                    } else {
-                        //Set Number from negative to Positive
-                        s_size = -s_size;
                     }
                 }
                 //Move sector to next
@@ -316,11 +307,11 @@ void *ns_dyn_mem_temporary_alloc(int16_t alloc_size)
                     retval = 0;
                     break;
                 } else if (s_size < 0) {
+                    s_size = -s_size;
                     //Free
-                    if (((-s_size) >= alloc_sector)) {
+                    if (s_size >= alloc_sector) {
                         /*found block*/
-                        //Convert Current size
-                        s_size = -s_size;
+
                         if (s_size > (alloc_sector + 4)) {
                             //debug("Bigger\r\n");
                             //Set sectror start len & Move pointer to Allocated data sector
@@ -332,15 +323,11 @@ void *ns_dyn_mem_temporary_alloc(int16_t alloc_size)
                             //Now set new slice start & End len fields
                             //Move pointer to New Free Sector
                             //Calculate new sector size
-                            alloc_sector += 2; //
-                            s_size = (s_size - alloc_sector);
+                            s_size = (s_size - alloc_sector -2);
 
                             *ptr++ = -(s_size);
                             ptr += s_size;
                             *ptr = -(s_size);
-                            if (mem_stat_info_ptr) {
-                                alloc_sector -= 2;
-                            }
                         } else {
                             //debug("USE Same\r\n");
                             //Move pointer to Allocated data sector
@@ -349,13 +336,10 @@ void *ns_dyn_mem_temporary_alloc(int16_t alloc_size)
                             retval = (void *) ptr;
                             ptr += s_size;//Move Pointer  to next free place
                             *ptr = s_size;
+                            alloc_sector = s_size;
                         }
                         break;
-                    } else {
-                        //Set Number from negative to Positive
-                        s_size = -s_size;
                     }
-
                 }
                 //Allocated sector
                 //Move
