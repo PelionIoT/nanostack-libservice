@@ -6,6 +6,7 @@ source/libip6string/stoip6.c \
 source/libList/ns_list.c \
 source/libTrace/ns_trace.c \
 source/nsdynmemLIB/nsdynmemLIB.c \
+source/nvmHelper/ns_nvm_helper.c \
 
 LIB := libservice.a
 EXPORT_HEADERS := mbed-client-libservice
