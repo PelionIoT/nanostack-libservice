@@ -251,10 +251,10 @@ void *ns_dyn_mem_temporary_alloc(int16_t alloc_size)
 #ifndef STANDARD_MALLOC
 static void ns_free_and_merge_with_adjacent_blocks(int *cur_block, int size)
 {
-    // Theory of operation: Sector is always in form | Len | Data | Len |
+    // Theory of operation: Block is always in form | Len | Data | Len |
     // So we need to check length of previous (if current not heap start)
-    // and next (if current not heap end) sectors. Negative length means
-    // free memory so we can merge freed sector with those.
+    // and next (if current not heap end) blocks. Negative length means
+    // free memory so we can merge freed block with those.
 
     int *start = cur_block;
     int *end = cur_block + size + 1;
@@ -315,7 +315,7 @@ void ns_dyn_mem_free(void *block)
     } else if ((ptr + size) >= heap_main_end) {
         heap_failure(NS_DYN_MEM_POINTER_NOT_VALID);
     } else {
-        // Validate Sector
+        // Validate block
         if (ns_block_validate(ptr, 1) != 0) {
             heap_failure(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED);
         } else {
