@@ -201,6 +201,48 @@ TEST(dynmem, too_big)
     free(heap);
 }
 
+TEST(dynmem, corrupted_memory)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    uint8_t *ptr = heap;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    int *pt = (int *)ns_dyn_mem_alloc(8);
+    CHECK(!heap_have_failed());
+    //Lets create under flow to mess up memory
+    pt -= 2;
+    *pt = 0;
+    ns_dyn_mem_alloc(8);
+    CHECK(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED == current_heap_error);
+    free(heap);
+}
+
+TEST(dynmem, no_big_enough_sector) {
+    uint16_t size = 112; //28-2 available sectors
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    uint8_t *ptr = heap;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    int *pt = (int *)ns_dyn_mem_alloc(8); //4
+    pt = (int *)ns_dyn_mem_alloc(8);
+    ns_dyn_mem_alloc(8);
+    ns_dyn_mem_temporary_alloc(8);
+    ns_dyn_mem_temporary_alloc(8);
+
+    ns_dyn_mem_free(pt);
+
+    pt = (int *)ns_dyn_mem_temporary_alloc(32);
+    CHECK(NULL == pt);
+    free(heap);
+}
+
 TEST(dynmem, diff_sizes)
 {
     uint16_t size = 1000;
