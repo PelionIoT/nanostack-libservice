@@ -46,6 +46,72 @@
 extern "C" {
 #endif
 
+#define NS_TRACE_USE_MBED_TRACE
+#if defined(NS_TRACE_USE_MBED_TRACE)
+
+#if defined(HAVE_DEBUG) && !defined(FEA_TRACE_SUPPORT)
+#define FEA_TRACE_SUPPORT
+#endif
+
+#include "mbed-trace/mbed_trace.h"
+
+
+/* Convert libTrace calls to mbed-trace calls */
+#define trace_init()                        mbed_trace_init()
+#define trace_free()                        mbed_trace_free()
+#define set_trace_config(config)            mbed_trace_config_set(config)
+#define get_trace_config()                  mbed_trace_config_get()
+#define set_trace_prefix_function(pref_f)   mbed_trace_prefix_function_set(pref_f)
+#define set_trace_suffix_function(suffix_f) mbed_trace_suffix_function_set(suffix_f)
+#define set_trace_print_function(print_f)   mbed_trace_print_function_set(print_f)
+#define set_trace_cmdprint_function(printf) mbed_trace_cmdprint_function_set(printf)
+#define set_trace_exclude_filters(filters)  mbed_trace_exclude_filters_set(filters)
+#define set_trace_include_filters(filters)  mbed_trace_include_filters_set(filters)
+#define get_trace_exclude_filters()         mbed_trace_exclude_filters_get()
+#define get_trace_include_filters()         mbed_trace_include_filters_get()
+#define trace_last()                        mbed_trace_last()
+
+
+/* Definitions for the old functions with no equivalents in mbed-trace. These work without any special init.
+ * */
+#if defined(FEA_TRACE_SUPPORT) || defined(HAVE_DEBUG) || (defined(YOTTA_CFG) && !defined(NDEBUG)) /*backward compatible*/
+#if defined  __GNUC__ || defined __CC_ARM
+/** obsolete function */
+void debugf(const char *fmt, ...) __attribute__ ((__format__(__printf__, 1, 2)));   //!< obsolete function
+void debug(const char *s);                                                          //!< obsolete function
+void debug_put(char c);                                                             //!< obsolete function
+void debug_hex(uint8_t x);                                                          //!< obsolete function
+void debug_int(int i);                                                              //!< obsolete function
+void printf_array(const void *buf, uint16_t len);                                   //!< obsolete function
+void printf_string(const void *buf, uint16_t len);                                  //!< obsolete function
+void printf_ipv6_address(const void *addr);                                         //!< obsolete function
+#else //__GNUC__ || __CC_ARM
+//obsolete functions:
+void debugf(const char *fmt, ...);
+void debug(const char *s);
+void debug_put(char c);
+void debug_hex(uint8_t x);
+void debug_int(int i);
+void printf_array(const void *buf, uint16_t len);
+void printf_string(const void *buf, uint16_t len);
+void printf_ipv6_address(const void *addr);
+#endif
+#else /*FEA_TRACE_SUPPORT*/
+// trace functionality not supported
+//obsolete
+#define debugf(...)                    ((void) 0)
+#define debug(s)                       ((void) 0)
+#define debug_put(c)                   ((void) 0)
+#define debug_hex(x)                   ((void) 0)
+#define debug_int(i)                   ((void) 0)
+#define printf_array(buf, len)         ((void) 0)
+#define printf_string(buf, len)        ((void) 0)
+#define printf_ipv6_address(addr)      ((void) 0)
+
+#endif /*FEA_TRACE_SUPPORT*/
+
+#else /* NS_TRACE_USE_MBED_TRACE */
+
 /** 3 upper bits are trace modes related,
     and 5 lower bits are trace level configuration */
 
@@ -313,6 +379,7 @@ void printf_ipv6_address(const void *addr);
 #define printf_ipv6_address(addr)      ((void) 0)
 
 #endif /*FEA_TRACE_SUPPORT*/
+#endif /* NS_TRACE_USE_MBED_TRACE */
 
 #ifdef __cplusplus
 }

@@ -42,6 +42,8 @@
 #endif
 #endif
 
+#ifndef NS_TRACE_USE_MBED_TRACE
+
 #define VT100_COLOR_ERROR "\x1b[31m"
 #define VT100_COLOR_WARN  "\x1b[33m"
 #define VT100_COLOR_INFO  "\x1b[39m"
@@ -496,6 +498,7 @@ char *trace_array(const uint8_t *buf, uint16_t len)
     m_trace.tmp_data_ptr = wptr;
     return str;
 }
+#endif /* NS_TRACE_USE_MBED_TRACE */
 
 // rest of debug print functions will be obsolete and will be overridden with new trace interface..
 void debugf(const char *fmt, ...)
