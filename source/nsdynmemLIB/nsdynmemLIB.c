@@ -114,24 +114,20 @@ void dev_stat_update(mem_stat_update_t type, int16_t size)
     }
 }
 
-static int heap_alloc_internal_check(int16_t alloc_size)
+static int convert_allocation_size(int16_t requested_bytes)
 {
-    int block_count = 0;
-
     if (heap_main == 0) {
         heap_failure(NS_DYN_MEM_HEAP_SECTOR_UNITIALIZED);
-    } else if (alloc_size < 1) {
+    } else if (requested_bytes < 1) {
         heap_failure(NS_DYN_MEM_ALLOCATE_SIZE_NOT_VALID);
-    } else if (alloc_size > (heap_size - 2 * sizeof(int)) ) {
+    } else if (requested_bytes > (heap_size - 2 * sizeof(int)) ) {
         heap_failure(NS_DYN_MEM_ALLOCATE_SIZE_NOT_VALID);
-    } else if (alloc_size) {
-        block_count = (alloc_size + sizeof(int) - 1) / sizeof(int);
     }
-    return block_count;
+    return (requested_bytes + sizeof(int) - 1) / sizeof(int);
 }
 
-// Checks that block length indicators equals
-// Block has format: Size of data area in words | data area in words | Size of data area in words
+// Checks that block length indicators are valid
+// Block has format: Size of data area [1 word] | data area [abs(size) words]| Size of data area [1 word]
 // If Size is negative it means area is unallocated
 // For direction, use 1 for direction up and -1 for down
 static int8_t ns_block_validate(int *block_start, int direction)
@@ -145,65 +141,77 @@ static int8_t ns_block_validate(int *block_start, int direction)
         end -= (1 + abs(size_start));
     }
 
-    if (size_start && size_start == *end) {
+    if (size_start != 0 && size_start == *end) {
         ret_val = 0;
     }
     return ret_val;
 }
 #endif
 
-#ifdef STANDARD_MALLOC
-#ifdef USE_IAR
-#pragma optimize=none
-#endif
-#endif
 // For direction, use 1 for direction up and -1 for down
 static void *ns_dyn_mem_internal_alloc(const int16_t alloc_size, int direction)
 {
 #ifndef STANDARD_MALLOC
     void *retval = 0;
-    int alloc_block = heap_alloc_internal_check(alloc_size);
-    if (alloc_block) {
+    int data_size = convert_allocation_size(alloc_size);
+    if (data_size) {
         int h_size = (heap_size / sizeof(int));
         int *ptr = direction > 0 ? heap_main : heap_main_end;
         int moved = 0;
+        bool update_start = true;
         platform_enter_critical();
         while (moved < h_size) {
             if (ns_block_validate(ptr, direction) == 0) {
-                int block_total_size = *ptr;
+                int block_data_size = *ptr;
 
-                if (block_total_size < 0) {
-                    block_total_size = -block_total_size;
-                    if (block_total_size >= alloc_block) {
+                if (block_data_size < 0) {
+                    //This is a free block so stop updating pointer
+                    update_start = false;
+
+                    block_data_size = -block_data_size;
+                    if (block_data_size >= data_size) {
                         /*found block*/
-                        if (block_total_size > (alloc_block + 4)) {
+                        if (block_data_size > (data_size + 4)) {
                             //There is enough room for a new hole so create it first
-                            int *hole_ptr = ptr + ((alloc_block + 2) * direction);
-                            int hole_size = block_total_size - alloc_block - 2;
+                            int *hole_ptr;
+                            if (direction > 0) {
+                                hole_ptr = ptr + data_size + 2;
+                            } else {
+                                hole_ptr = ptr - (data_size + 2);
+                            }
+                            int hole_size = block_data_size - data_size - 2;
                             *hole_ptr = -(hole_size);
-                            hole_ptr += (hole_size + 1) * direction;
+                            if (direction > 0) {
+                                hole_ptr += (hole_size + 1);
+                            } else {
+                                hole_ptr -= (hole_size + 1);
+                            }
                             *hole_ptr = -(hole_size);
                         }else{
-                            alloc_block = block_total_size;
+                            data_size = block_data_size;
                         }
 
-                        *ptr = alloc_block;
+                        *ptr = data_size;
                         if (direction > 0) {
                             ptr++;
                             retval = ptr;
-                            ptr += alloc_block;
+                            ptr += data_size;
                         } else {
-                            ptr -= alloc_block;
+                            ptr -= data_size;
                             retval = ptr;
                             ptr--;
                         }
-                        *ptr = alloc_block;
+                        *ptr = data_size;
                         break;
                     }
                 }
 
-                moved += (block_total_size + 2);
-                ptr += direction * (block_total_size + 2);
+                moved += (block_data_size + 2);
+                if (direction > 0) {
+                    ptr += block_data_size + 2;
+                } else {
+                    ptr -= (block_data_size + 2);
+                }
             } else {
                 heap_failure(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED);
                 retval = 0;
@@ -213,11 +221,9 @@ static void *ns_dyn_mem_internal_alloc(const int16_t alloc_size, int direction)
 
 
         if (mem_stat_info_ptr) {
-            // If alloc fail needs to collect size of failed alloc,
-            // this code needs to be revisited
             if (retval) {
                 //Update Allocate OK
-                dev_stat_update(DEV_HEAP_ALLOC_OK, (alloc_block + 2) * sizeof(int));
+                dev_stat_update(DEV_HEAP_ALLOC_OK, (data_size + 2) * sizeof(int));
 
             } else {
                 //Update Allocate Fail, second parameter is not used for stats
@@ -249,7 +255,7 @@ void *ns_dyn_mem_temporary_alloc(int16_t alloc_size)
 }
 
 #ifndef STANDARD_MALLOC
-static void ns_free_and_merge_with_adjacent_blocks(int *cur_block, int size)
+static void ns_free_and_merge_with_adjacent_blocks(int *cur_block, int data_size)
 {
     // Theory of operation: Block is always in form | Len | Data | Len |
     // So we need to check length of previous (if current not heap start)
@@ -257,13 +263,15 @@ static void ns_free_and_merge_with_adjacent_blocks(int *cur_block, int size)
     // free memory so we can merge freed block with those.
 
     int *start = cur_block;
-    int *end = cur_block + size + 1;
-    int total_size = size;
+    int *end = cur_block + data_size + 1;
+    *cur_block = -data_size;
+    *end = -data_size;
+    int merged_data_size = data_size;
 
     if (cur_block != heap_main) {
         cur_block--;
         if (*cur_block < 0) {
-            total_size += (2 - *cur_block);
+            merged_data_size += (2 - *cur_block);
             start -= (2 - *cur_block);
         }
         cur_block++;
@@ -272,15 +280,15 @@ static void ns_free_and_merge_with_adjacent_blocks(int *cur_block, int size)
     if (end != heap_main_end) {
         end++;
         if (*end < 0) {
-            total_size += (2 - *end);
+            merged_data_size += (2 - *end);
             end += (1 - *end);
         }else{
             end--;
         }
     }
-    *cur_block = -total_size;
-    *start = -total_size;
-    *end = -total_size;
+
+    *start = -merged_data_size;
+    *end = -merged_data_size;
 }
 #endif
 
@@ -315,7 +323,6 @@ void ns_dyn_mem_free(void *block)
     } else if ((ptr + size) >= heap_main_end) {
         heap_failure(NS_DYN_MEM_POINTER_NOT_VALID);
     } else {
-        // Validate block
         if (ns_block_validate(ptr, 1) != 0) {
             heap_failure(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED);
         } else {
