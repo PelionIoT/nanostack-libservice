@@ -26,6 +26,9 @@ static int *heap_main = 0;
 static int *heap_main_end = 0;
 static uint16_t heap_size = 0;
 
+static int *smallest_possible_start;
+static int *biggest_possible_start;
+
 typedef enum mem_stat_update_t {
     DEV_HEAP_ALLOC_OK,
     DEV_HEAP_ALLOC_FAIL,
@@ -63,6 +66,7 @@ void ns_dyn_mem_init(uint8_t *heap, uint16_t h_size, void (*passed_fptr)(heap_fa
         h_size -= (sizeof(int) - temp_int);
     }
     heap_main = (int *)heap; // SET Heap Pointer
+    smallest_possible_start = heap_main;
     heap_size = h_size; //Set Heap Size
     temp_int = (h_size / sizeof(int));
     temp_int -= 2;
@@ -71,6 +75,7 @@ void ns_dyn_mem_init(uint8_t *heap, uint16_t h_size, void (*passed_fptr)(heap_fa
     ptr += (temp_int + 1);
     *ptr = -(temp_int);
     heap_main_end = ptr;
+    biggest_possible_start = heap_main_end;
     //RESET Memory by Hea Len
     if (info_ptr) {
         mem_stat_info_ptr = info_ptr;
@@ -155,12 +160,12 @@ static void *ns_dyn_mem_internal_alloc(const int16_t alloc_size, int direction)
     void *retval = 0;
     int data_size = convert_allocation_size(alloc_size);
     if (data_size) {
-        int h_size = (heap_size / sizeof(int));
-        int *ptr = direction > 0 ? heap_main : heap_main_end;
+        int free_heap_size = ((uintptr_t)biggest_possible_start - (uintptr_t)smallest_possible_start) / sizeof(int);
+        int *ptr = direction > 0 ? smallest_possible_start : biggest_possible_start;
         int moved = 0;
         bool update_start = true;
         platform_enter_critical();
-        while (moved < h_size) {
+        while (moved < free_heap_size) {
             if (ns_block_validate(ptr, direction) == 0) {
                 int block_data_size = *ptr;
 
@@ -211,6 +216,13 @@ static void *ns_dyn_mem_internal_alloc(const int16_t alloc_size, int direction)
                     ptr += block_data_size + 2;
                 } else {
                     ptr -= (block_data_size + 2);
+                }
+                if (update_start) {
+                    if (direction > 0) {
+                        smallest_possible_start = ptr;
+                    } else {
+                        biggest_possible_start = ptr;
+                    }
                 }
             } else {
                 heap_failure(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED);
@@ -288,7 +300,13 @@ static void ns_free_and_merge_with_adjacent_blocks(int *cur_block, int data_size
     }
 
     *start = -merged_data_size;
+    if (start < smallest_possible_start) {
+        smallest_possible_start = start;
+    }
     *end = -merged_data_size;
+    if (end > biggest_possible_start) {
+        biggest_possible_start = end;
+    }
 }
 #endif
 
