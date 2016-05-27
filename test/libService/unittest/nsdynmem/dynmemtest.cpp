@@ -142,6 +142,33 @@ TEST(dynmem, ns_dyn_mem_temporary_alloc)
     free(heap);
 }
 
+TEST(dynmem, test_both_allocs_with_hole_usage) {
+    uint16_t size = 48;
+    mem_stat_t info;
+    void *p[size];
+    uint8_t *heap = (uint8_t*)malloc(size);
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+
+    void *ptr = ns_dyn_mem_alloc(15);
+    void *ptr2 = ns_dyn_mem_alloc(4);
+
+    ns_dyn_mem_free(ptr);
+    ns_dyn_mem_free(ptr2);
+    CHECK(info.heap_sector_allocated_bytes == 0);
+
+    void *ptr3 = ns_dyn_mem_temporary_alloc(15);
+    void *ptr4 = ns_dyn_mem_temporary_alloc(5);
+
+    ns_dyn_mem_free(ptr3);
+    ns_dyn_mem_free(ptr4);
+    CHECK(info.heap_sector_allocated_bytes == 0);
+
+    free(heap);
+}
+
 TEST(dynmem, zero_allocate)
 {
     uint16_t size = 1000;
@@ -171,6 +198,48 @@ TEST(dynmem, too_big)
     ns_dyn_mem_alloc(size);
     CHECK(heap_have_failed());
     CHECK(NS_DYN_MEM_ALLOCATE_SIZE_NOT_VALID == current_heap_error);
+    free(heap);
+}
+
+TEST(dynmem, corrupted_memory)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    uint8_t *ptr = heap;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    int *pt = (int *)ns_dyn_mem_alloc(8);
+    CHECK(!heap_have_failed());
+    //Lets create under flow to mess up memory
+    pt -= 2;
+    *pt = 0;
+    ns_dyn_mem_alloc(8);
+    CHECK(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED == current_heap_error);
+    free(heap);
+}
+
+TEST(dynmem, no_big_enough_sector) {
+    uint16_t size = 112; //28-2 available sectors
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    uint8_t *ptr = heap;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    int *pt = (int *)ns_dyn_mem_alloc(8); //4
+    pt = (int *)ns_dyn_mem_alloc(8);
+    ns_dyn_mem_alloc(8);
+    ns_dyn_mem_temporary_alloc(8);
+    ns_dyn_mem_temporary_alloc(8);
+
+    ns_dyn_mem_free(pt);
+
+    pt = (int *)ns_dyn_mem_temporary_alloc(32);
+    CHECK(NULL == pt);
     free(heap);
 }
 
@@ -295,4 +364,59 @@ TEST(dynmem, free_on_empty_heap)
     CHECK(heap_have_failed());
     CHECK(NS_DYN_MEM_POINTER_NOT_VALID == current_heap_error);
     free(heap);
+}
+
+
+TEST(dynmem, not_negative_stats)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    void *p;
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+    CHECK(info.heap_sector_allocated_bytes == 0);
+    ns_dyn_mem_alloc(8);
+    p = ns_dyn_mem_alloc(8);
+    ns_dyn_mem_alloc(8);
+    CHECK(info.heap_sector_allocated_bytes >= 24);
+    int16_t last_value = info.heap_sector_allocated_bytes;
+    ns_dyn_mem_free(p); // Free the middle one to leave hole for 4 byes.
+    CHECK(info.heap_sector_allocated_bytes >= 16);
+    CHECK(info.heap_sector_allocated_bytes < last_value);
+    last_value = info.heap_sector_allocated_bytes;
+    // Try to make allocator fill a hole bigger that requested size,
+    // run alloc&free for 10 times to make it visible if the stats will not include
+    // the overhead. Previously this was leading a negative value in allocated sector count.
+    for (int i=0; i<10; i++) {
+        p = ns_dyn_mem_alloc(1);
+        ns_dyn_mem_free(p);
+    }
+    CHECK(info.heap_sector_allocated_bytes == last_value);
+    free(heap);
+}
+
+TEST(dynmem, test_invalid_pointer_freed) {
+    uint16_t size = 28;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, NULL);
+    int *ptr = (int *)ns_dyn_mem_alloc(4);
+    ptr--;
+    *ptr = 16;
+    ptr++;
+    ns_dyn_mem_free(ptr);
+    CHECK(NS_DYN_MEM_POINTER_NOT_VALID == current_heap_error);
+
+    free(heap);
+}
+
+//NOTE! This test must be last!
+TEST(dynmem, uninitialized_test){
+    ns_dyn_mem_alloc(4);
+    uint8_t buf[1];
+    ns_dyn_mem_free(&buf);
 }
