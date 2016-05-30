@@ -164,6 +164,32 @@ TEST(dynmem, test_both_allocs_with_hole_usage) {
 
     ns_dyn_mem_free(ptr3);
     ns_dyn_mem_free(ptr4);
+
+
+    CHECK(info.heap_sector_allocated_bytes == 0);
+
+    free(heap);
+}
+
+TEST(dynmem, test_temp_alloc_with_skipping_hole) {
+    uint16_t size = 1000;
+    mem_stat_t info;
+    void *p[size];
+    uint8_t *heap = (uint8_t*)malloc(size);
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+
+    void *ptr1 = ns_dyn_mem_temporary_alloc(15);
+    void *ptr2 = ns_dyn_mem_temporary_alloc(5);
+
+    ns_dyn_mem_free(ptr1);
+    void *ptr3 = ns_dyn_mem_temporary_alloc(35);
+    ns_dyn_mem_free(ptr2);
+    ns_dyn_mem_free(ptr3);
+
+
     CHECK(info.heap_sector_allocated_bytes == 0);
 
     free(heap);
@@ -256,9 +282,9 @@ TEST(dynmem, diff_sizes)
     int i;
     // Should leave headroom for 2 pointers
     for (i=1; i<(size-8); i++) {
-        p = ns_dyn_mem_temporary_alloc(i);
+        p = ns_dyn_mem_temporary_alloc(i); //1 block, 1, 1, 1, 2, 2, 2, 2
         CHECK(p);
-        ns_dyn_mem_free(p);
+        ns_dyn_mem_free(p); //1 block hangs, 1 merge,
         CHECK(!heap_have_failed());
     }
     CHECK(!heap_have_failed()); // Mem full is not failure
@@ -297,7 +323,7 @@ TEST(dynmem, middle_free)
     ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
     CHECK(!heap_have_failed());
     for (int i=0; i<3; i++) {
-        p[i] = ns_dyn_mem_alloc(100);
+        p[i] = ns_dyn_mem_temporary_alloc(100);
         CHECK(p);
     }
     ns_dyn_mem_free(p[1]);
@@ -382,7 +408,7 @@ TEST(dynmem, not_negative_stats)
     ns_dyn_mem_alloc(8);
     CHECK(info.heap_sector_allocated_bytes >= 24);
     int16_t last_value = info.heap_sector_allocated_bytes;
-    ns_dyn_mem_free(p); // Free the middle one to leave hole for 4 byes.
+    ns_dyn_mem_free(p); // Free the middle one to leave hole for 4 bytes.
     CHECK(info.heap_sector_allocated_bytes >= 16);
     CHECK(info.heap_sector_allocated_bytes < last_value);
     last_value = info.heap_sector_allocated_bytes;
