@@ -40,8 +40,7 @@ typedef struct {
     ns_list_link_t link;
 } hole_t;
 
-typedef NS_LIST_HEAD(hole_t, link) holes_list_t;
-static holes_list_t holes_list;
+static NS_LIST_DEFINE(holes_list, hole_t, link);
 
 // size of a hole_t in our word units
 #define HOLE_T_SIZE ((sizeof(hole_t) + sizeof(int) - 1) / sizeof(int))
@@ -77,7 +76,6 @@ void ns_dyn_mem_init(uint8_t *heap, uint16_t h_size, void (*passed_fptr)(heap_fa
         heap += (sizeof(int) - temp_int);
         h_size -= (sizeof(int) - temp_int);
     }
-    memset(&holes_list, 0, sizeof(holes_list_t));
 
     /* Make correction for total length also */
     temp_int = (h_size % sizeof(int));
