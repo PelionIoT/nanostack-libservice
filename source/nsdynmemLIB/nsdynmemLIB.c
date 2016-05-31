@@ -171,95 +171,89 @@ static int8_t ns_block_validate(int *block_start, int direction)
 static void *ns_dyn_mem_internal_alloc(const int16_t alloc_size, int direction)
 {
 #ifndef STANDARD_MALLOC
-    int *retval = NULL;
+    int *block_ptr = NULL;
+
+    platform_enter_critical();
+
     int data_size = convert_allocation_size(alloc_size);
-    int *hole_ptr = NULL;
-    int *ptr = NULL;
-    if (data_size) {
-        platform_enter_critical();
-        //use ns_list_foreach_reverse if direction == -1;
-        hole_t *cur_hole;
-        if ( direction > 0 ) {
-            cur_hole = ns_list_get_first(&holes_list);
-        } else {
-            cur_hole = ns_list_get_last(&holes_list);
-        }
-
-        while ( cur_hole ) {
-            ptr = block_start_from_hole(cur_hole);
-            if (ns_block_validate(ptr, direction) == 0) {
-                int block_data_size = -(*ptr);
-
-                if (block_data_size >= data_size) {
-                    /*found block*/
-                    if (block_data_size >= (data_size + 2 + HOLE_T_SIZE)) {
-                        int hole_size = block_data_size - data_size - 2;
-
-                        //There is enough room for a new hole so create it first
-                        if ( direction > 0 ) {
-                            hole_ptr = ptr + data_size + 2;
-                        } else {
-                            hole_ptr = ptr;
-                        }
-                        if( direction > 0 ){
-                            // Would like to just replace this cur_hole with new descriptor, but
-                            // they could overlap, so ns_list_replace might fail
-                            //ns_list_replace(&holes_list, cur_hole, hole_from_block_start(hole_ptr));
-                            hole_t *before = ns_list_get_previous(&holes_list, cur_hole);
-                            ns_list_remove(&holes_list, cur_hole);
-                            if (before) {
-                                ns_list_add_after(&holes_list, before, hole_from_block_start(hole_ptr));
-                            } else {
-                                ns_list_add_to_start(&holes_list, hole_from_block_start(hole_ptr));
-                            }
-                        }
-
-                        *hole_ptr = -(hole_size);
-                        hole_ptr += (hole_size + 1);
-                        *hole_ptr = -(hole_size);
-                        hole_ptr -= hole_size;
-                        if( direction < 0 ){
-                            ptr += hole_size + 2;
-                            hole_ptr = NULL; //no need to update
-                        }
-                    } else {
-                        data_size = block_data_size;
-                        ns_list_remove(&holes_list, hole_from_block_start(ptr));
-                    }
-                    *ptr = data_size;
-                    ptr++;
-                    retval = ptr;
-                    ptr += data_size;
-                    *ptr = data_size;
-                    break;
-                }
-            } else {
-                heap_failure(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED);
-                retval = 0;
-                break;
-            }
-            if ( direction > 0 ) {
-                cur_hole = ns_list_get_next(&holes_list, cur_hole);
-            } else {
-                cur_hole = ns_list_get_previous(&holes_list, cur_hole);
-            }
-        }
-
-        if (mem_stat_info_ptr) {
-            if (retval) {
-                //Update Allocate OK
-                dev_stat_update(DEV_HEAP_ALLOC_OK, (data_size + 2) * sizeof(int));
-
-            } else {
-                //Update Allocate Fail, second parameter is not used for stats
-                dev_stat_update(DEV_HEAP_ALLOC_FAIL, 0);
-            }
-        }
-        platform_exit_critical();
+    if (!data_size) {
+        goto done;
     }
-    return retval;
+
+    // ns_list_foreach, either forwards or backwards, result to ptr
+    for (hole_t *cur_hole = direction > 0 ? ns_list_get_first(&holes_list)
+                                          : ns_list_get_last(&holes_list);
+         cur_hole;
+         cur_hole = direction > 0 ? ns_list_get_next(&holes_list, cur_hole)
+                                  : ns_list_get_previous(&holes_list, cur_hole)
+        ) {
+        int *p = block_start_from_hole(cur_hole);
+        if (ns_block_validate(p, direction) != 0 || *p >= 0) {
+            //Validation failed, or this supposed hole has positive (allocated) size
+            heap_failure(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED);
+            break;
+        }
+        if (-*p >= data_size) {
+            // Found a big enough block
+            block_ptr = p;
+            break;
+        }
+    }
+
+    if (!block_ptr) {
+        goto done;
+    }
+
+    int block_data_size = -*block_ptr;
+    if (block_data_size >= (data_size + 2 + HOLE_T_SIZE)) {
+        int hole_size = block_data_size - data_size - 2;
+        int *hole_ptr;
+        //There is enough room for a new hole so create it first
+        if ( direction > 0 ) {
+            hole_ptr = block_ptr + 1 + data_size + 1;
+            // Hole will be left at end of area.
+            // Would like to just replace this block_ptr with new descriptor, but
+            // they could overlap, so ns_list_replace might fail
+            //ns_list_replace(&holes_list, block_ptr, hole_from_block_start(hole_ptr));
+            hole_t *before = ns_list_get_previous(&holes_list, hole_from_block_start(block_ptr));
+            ns_list_remove(&holes_list, hole_from_block_start(block_ptr));
+            if (before) {
+                ns_list_add_after(&holes_list, before, hole_from_block_start(hole_ptr));
+            } else {
+                ns_list_add_to_start(&holes_list, hole_from_block_start(hole_ptr));
+            }
+        } else {
+            hole_ptr = block_ptr;
+            // Hole remains at start of area - keep existing descriptor in place.
+            block_ptr += 1 + hole_size + 1;
+        }
+
+        hole_ptr[0] = -hole_size;
+        hole_ptr[1 + hole_size] = -hole_size;
+    } else {
+        // Not enough room for a left-over hole, so use the whole block
+        data_size = block_data_size;
+        ns_list_remove(&holes_list, hole_from_block_start(block_ptr));
+    }
+    block_ptr[0] = data_size;
+    block_ptr[1 + data_size] = data_size;
+
+ done:
+    if (mem_stat_info_ptr) {
+        if (block_ptr) {
+            //Update Allocate OK
+            dev_stat_update(DEV_HEAP_ALLOC_OK, (data_size + 2) * sizeof(int));
+
+        } else {
+            //Update Allocate Fail, second parameter is not used for stats
+            dev_stat_update(DEV_HEAP_ALLOC_FAIL, 0);
+        }
+    }
+    platform_exit_critical();
+
+    return block_ptr ? block_ptr + 1 : NULL;
 #else
-    void *retval = 0;
+    void *retval = NULL;
     if (alloc_size) {
         platform_enter_critical();
         retval = malloc(alloc_size);
@@ -405,40 +399,3 @@ void ns_dyn_mem_free(void *block)
     platform_exit_critical();
 #endif
 }
-
-#ifndef STANDARD_MALLOC
-#ifdef DEV_STAT
-
-int16_t ns_dyn_mem_longest_free_block(void)
-{
-
-    int *ptr;
-    int size, h_size;
-    int scanned = 0;
-    int16_t longest_block = 0;
-    if (heap_main) {
-        h_size = heap_size / 4;
-        ptr = heap_main;
-        platform_enter_critical();
-        while (scanned < h_size) {
-            size = *ptr;
-            if (size < 0) {
-                size = -size;
-                if (size > longest_block) {
-                    longest_block = size;
-                }
-            }
-            if (size == 0) {
-                heap_failure(NS_DYN_MEM_HEAP_SECTOR_CORRUPTED);
-                platform_exit_critical();
-                return 0;
-            }
-            ptr += size + 2;
-            scanned += (size + 2);
-        }
-        platform_exit_critical();
-    }
-    return longest_block;
-}
-#endif
-#endif
