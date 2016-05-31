@@ -8,7 +8,8 @@ TEST_SRC_FILES = \
 	main.cpp \
     dynmemtest.cpp \
     error_callback.c \
-    ../stubs/platform_critical.c
+    ../stubs/platform_critical.c \
+    ../stubs/ns_list_stub.c
 
 #        ../../../../source/libBits/common_functions.c
 #	../stubs/some_stub.c \
