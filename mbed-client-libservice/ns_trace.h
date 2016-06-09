@@ -49,7 +49,7 @@ extern "C" {
 #define NS_TRACE_USE_MBED_TRACE
 #if defined(NS_TRACE_USE_MBED_TRACE)
 
-#if defined(HAVE_DEBUG) && !defined(FEA_TRACE_SUPPORT)
+#if (defined(YOTTA_CFG_MBED_TRACE) || defined(HAVE_DEBUG)) && !defined(FEA_TRACE_SUPPORT)
 #define FEA_TRACE_SUPPORT
 #endif
 
