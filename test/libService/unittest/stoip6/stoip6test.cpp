@@ -103,3 +103,121 @@ TEST(stoip6, RegressionTestForOffByOne)
     free(sourceTemp);
 }
 
+/***********************************************************/
+/* Second test group for the old tests that were once lost */
+
+const char string_addr[][40] =
+{
+    "2001:db8::1:0:0:1",                    // 1
+    "2001:db8:aaaa:bbbb:cccc:dddd:eeee:1",  // 2
+    "2001:db8::1",                          // 3
+    "2001:db8::2:1",                        // 4
+    "2001:db8:aaaa:bbbb:cccc:dddd:0:1",     // 5
+    "2001:db8::aaaa:0:0:1",                 // 6
+    "2001:0:0:1::1",                        // 7
+    "2001:0:0:1::",                         // 8
+    "2001:db8::",                           // 9
+    "::aaaa:0:0:1",                         // 10
+    "::1",                                  // 11
+    "::",                                   // 12
+};
+
+
+const uint8_t hex_addr[][16] =
+{
+    { 0x20, 0x01, 0xd, 0xb8, 0,0,0,0,0,1,0,0,0,0,0,1 },
+    { 0x20, 0x01, 0xd, 0xb8, 0xaa, 0xaa, 0xbb, 0xbb, 0xcc, 0xcc, 0xdd, 0xdd, 0xee, 0xee, 0x00, 0x01 },
+    { 0x20, 0x01, 0xd, 0xb8, 0,0,0,0,0,0,0,0,0,0,0,1 },
+    { 0x20, 0x01, 0xd,0xb8, 0,0,0,0,0,0,0,0, 0,2,0,1 },
+    { 0x20, 0x01, 0xd, 0xb8, 0xaa, 0xaa, 0xbb, 0xbb, 0xcc, 0xcc, 0xdd, 0xdd, 0,0, 0x00, 0x01 },
+    { 0x20, 0x01, 0xd, 0xb8, 0,0,0,0,0xaa,0xaa,0,0,0,0,0,1 },
+    { 0x20, 0x01, 0,0 ,0,0 ,0,1,0,0,0,0,0,0,0,1 },
+    { 0x20, 0x01, 0,0 ,0,0 ,0,1,0,0,0,0,0,0,0,0 },
+    { 0x20, 0x01, 0xd, 0xb8 },
+    { 0,0,0,0,0,0,0,0,0xaa,0xaa,0,0,0,0,0,1 },
+    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },
+    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+};
+
+char buf[40];
+int i = 0;
+
+TEST_GROUP(stoip6_2)
+{
+    void setUp(void)
+    {
+        memset(buf, 0, 40);
+    }
+
+    void tearDown(void)
+    {
+        i++;
+    }
+};
+
+/* Unity test code starts */
+
+
+TEST(stoip6_2, test_2_1)
+{
+    i = 0;
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+}
+
+TEST(stoip6_2, test_2_2)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+}
+TEST(stoip6_2, test_2_3)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+}
+TEST(stoip6_2, test_2_4)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+}
+TEST(stoip6_2, test_2_5)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+}
+TEST(stoip6_2, test_2_6)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+}
+TEST(stoip6_2, test_2_7)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+}
+TEST(stoip6_2, test_2_8)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+}
+TEST(stoip6_2, test_2_9)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+}
+TEST(stoip6_2, test_2_10)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, 16));
+}
+TEST(stoip6_2, test_2_11)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, 16));
+}
+TEST(stoip6_2, test_2_12)
+{
+    stoip6(string_addr[i], strlen(string_addr[i]), buf);
+    CHECK(0 == memcmp(hex_addr[i], buf, 16));
+}
+

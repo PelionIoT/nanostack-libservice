@@ -24,3 +24,4 @@ int main(int ac, char **av)
 }
 
 IMPORT_TEST_GROUP(ip6tos);
+IMPORT_TEST_GROUP(ip6tos_2);
