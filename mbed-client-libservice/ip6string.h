@@ -18,25 +18,49 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "ns_types.h"
 /**
  * Print binary IPv6 address to a string.
+ *
  * String must contain enough room for full address, 40 bytes exact.
  * IPv4 tunneling addresses are not covered.
+ *
  * \param ip6addr IPv6 address.
- * \p buffer to write string to.
+ * \param p buffer to write string to.
+ * \return length of generated string excluding the terminating null character
  */
-void ip6tos(const void *ip6addr, char *p);
+uint_fast8_t ip6tos(const void *ip6addr, char *p);
+
+/**
+ * Print binary IPv6 prefix to a string.
+ *
+ * String buffer `p` must contain enough room for a full address and prefix length, 44 bytes exact.
+ * Bits in the `prefix` buffer beyond `prefix_len` bits are not shown and only the bytes containing the
+ * prefix bits are read. I.e. for a 20 bit prefix 3 bytes are read, and for a 0 bit prefix 0 bytes are
+ * read (thus if `prefix_len` is zero, `prefix` can be NULL).
+ * `prefix_len` must be 0 to 128.
+ *
+ * \param prefix IPv6 prefix.
+ * \param prefix_len length of `prefix` in bits.
+ * \param p buffer to write string to.
+ * \return length of generated string excluding the terminating null character, or 0 for an error, such as 'prefix_len' > 128
+ */
+uint_fast8_t ip6_prefix_tos(const void *prefix, uint_fast8_t prefix_len, char *p);
 
 /**
  * Convert numeric IPv6 address string to a binary.
+ *
  * IPv4 tunneling addresses are not covered.
+ *
  * \param ip6addr IPv6 address in string format.
  * \param len Lenght of ipv6 string, maximum of 41.
  * \param dest buffer for address. MUST be 16 bytes.
  */
 void stoip6(const char *ip6addr, size_t len, void *dest);
 /**
- * Find out numeric IPv6 address prefix length
+ * Find out numeric IPv6 address prefix length.
+ *
  * \param ip6addr  IPv6 address in string format
  * \return prefix length or 0 if it not given
  */
