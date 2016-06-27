@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 #include <stdio.h>
-#include <inttypes.h>
+#include <string.h>
+#include "common_functions.h"
 #include "ip6string.h"
 
 /**
@@ -24,8 +25,9 @@
  * \param addr IPv6 address.
  * \p buffer to write string to.
  */
-void ip6tos(const void *ip6addr, char *p)
+uint_fast8_t ip6tos(const void *ip6addr, char *p)
 {
+    char *p_orig = p;
     uint_fast8_t zero_start = 255, zero_len = 1;
     const uint8_t *addr = ip6addr;
     uint_fast16_t part;
@@ -91,5 +93,27 @@ void ip6tos(const void *ip6addr, char *p)
             *p++ = ':';
         }
     }
-    *p++ = '\0';
+    *p = '\0';
+
+    // Return length of generated string, excluding the terminating null character
+    return p - p_orig;
+}
+
+uint_fast8_t ip6_prefix_tos(const void *prefix, uint_fast8_t prefix_len, char *p)
+{
+    char *wptr = p;
+    uint8_t addr[16] = {0};
+
+    if (prefix_len > 128) {
+        return 0;
+    }
+
+    // Generate prefix part of the string
+    bitcopy(addr, prefix, prefix_len);
+    wptr += ip6tos(addr, wptr);
+    // Add the prefix length part of the string
+    wptr += sprintf(wptr, "/%"PRIuFAST8, prefix_len);
+
+    // Return total length of generated string
+    return wptr - p;
 }

@@ -23,5 +23,5 @@ int main(int ac, char **av)
     return CommandLineTestRunner::RunAllTests(ac, av);
 }
 
-IMPORT_TEST_GROUP(stoip6);
-IMPORT_TEST_GROUP(stoip6_2);
+IMPORT_TEST_GROUP(ip6tos);
+IMPORT_TEST_GROUP(ip6tos_2);
