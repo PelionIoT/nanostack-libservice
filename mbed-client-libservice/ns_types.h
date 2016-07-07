@@ -247,7 +247,7 @@ typedef int_fast32_t int_fast24_t;
 
 /** \brief Pragma to suppress warnings about always true/false comparisons
  */
-#if defined __GNUC__ && !defined __CC_ARM
+#if defined __GNUC__ && NS_GCC_VERSION >= 40600 && !defined __CC_ARM
 #define NS_FUNNY_COMPARE_OK         _Pragma("GCC diagnostic push") \
                                     _Pragma("GCC diagnostic ignored \"-Wtype-limits\"")
 #define NS_FUNNY_COMPARE_RESTORE    _Pragma("GCC diagnostic pop")
