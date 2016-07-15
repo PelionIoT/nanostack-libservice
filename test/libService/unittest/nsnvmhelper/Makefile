@@ -9,7 +9,7 @@ TEST_SRC_FILES = main.cpp \
 	test_ns_nvm_helper.c \
 	../stubs/platform_nvm_stub.c \
 	../stubs/nsdynmemLIB_stub.c \
-	../stubs/ns_trace_stub.c \
+	../stubs/mbed_trace_stub.c \
 	../stubs/ns_list_stub.c
 
 include ../MakefileWorker.mk
