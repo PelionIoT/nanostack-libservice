@@ -48,10 +48,10 @@
 #define VT100_COLOR_DEBUG "\x1b[90m"
 
 /** default max trace line size in bytes */
-#define DEFAULT_TRACE_LINE_LENGTH     1024
+#define DEFAULT_TRACE_LINE_LENGTH     256
 /** default max temporary buffer size in bytes, used in
     trace_ipv6, trace_array and trace_strn */
-#define DEFAULT_TRACE_TMP_LINE_LEN        512
+#define DEFAULT_TRACE_TMP_LINE_LEN        128
 /** default max filters (include/exclude) length in bytes */
 #define DEFAULT_TRACE_FILTER_LENGTH       24
 
