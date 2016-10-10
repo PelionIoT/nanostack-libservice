@@ -384,7 +384,6 @@ TEST(dynmem, free_on_empty_heap)
     free(heap);
 }
 
-
 TEST(dynmem, not_negative_stats)
 {
     uint16_t size = 1000;
