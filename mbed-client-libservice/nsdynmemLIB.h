@@ -47,12 +47,12 @@ typedef enum {
  */
 typedef struct mem_stat_t {
     /*Heap stats*/
-    int16_t heap_sector_size;                   /**< Heap total Sector len. */
-    int16_t heap_sector_alloc_cnt;              /**< Reserved Heap sector cnt. */
-    int16_t heap_sector_allocated_bytes;        /**< Reserved Heap data in bytes. */
-    int16_t heap_sector_allocated_bytes_max;    /**< Reserved Heap data in bytes max value. */
-    uint32_t heap_alloc_total_bytes;            /**< Total Heap allocated bytes. */
-    uint32_t heap_alloc_fail_cnt;               /**< Counter for Heap allocation fail. */
+    uint16_t heap_sector_size;                   /**< Heap total Sector len. */
+    uint16_t heap_sector_alloc_cnt;              /**< Reserved Heap sector cnt. */
+    uint16_t heap_sector_allocated_bytes;        /**< Reserved Heap data in bytes. */
+    uint16_t heap_sector_allocated_bytes_max;    /**< Reserved Heap data in bytes max value. */
+    uint32_t heap_alloc_total_bytes;             /**< Total Heap allocated bytes. */
+    uint32_t heap_alloc_fail_cnt;                /**< Counter for Heap allocation fail. */
 } mem_stat_t;
 
 /**
