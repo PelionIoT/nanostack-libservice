@@ -359,7 +359,7 @@ typedef int_fast32_t int_fast24_t;
  * except for the most trivial functions (which could then probably be macros).
  */
 #ifdef NS_ALLOW_INLINING
-#define NS_INLINE inline
+#define NS_INLINE __attribute__((always_inline)) __inline
 #else
 #define NS_INLINE
 #endif
