@@ -86,6 +86,10 @@ extern void ns_dyn_mem_init(void *heap, ns_mem_heap_size_t h_size, void (*passed
   * \return <0, Free Fail
   */
 extern void ns_dyn_mem_free(void *heap_ptr);
+
+#define ns_dyn_mem_temporary_alloc(alloc_size) ns_dyn_mem_temporary_alloc2(alloc_size,__FILE__,__LINE__)
+#define ns_dyn_mem_alloc(alloc_size) ns_dyn_mem_alloc2(alloc_size,__FILE__,__LINE__)
+
 /**
   * \brief Allocate temporary data.
   *
@@ -96,7 +100,7 @@ extern void ns_dyn_mem_free(void *heap_ptr);
   * \return 0, Allocate Fail
   * \return >0, Pointer to allocated data sector.
   */
-extern void *ns_dyn_mem_temporary_alloc(ns_mem_block_size_t alloc_size);
+extern void *ns_dyn_mem_temporary_alloc2(ns_mem_block_size_t alloc_size, const char *func, int line);
 /**
   * \brief Allocate long period data.
   *
@@ -107,7 +111,7 @@ extern void *ns_dyn_mem_temporary_alloc(ns_mem_block_size_t alloc_size);
   * \return 0, Allocate Fail
   * \return >0, Pointer to allocated data sector.
   */
-extern void *ns_dyn_mem_alloc(ns_mem_block_size_t alloc_size);
+extern void *ns_dyn_mem_alloc2(ns_mem_block_size_t alloc_size, const char *func, int line);
 
 /**
   * \brief Get pointer to the current mem_stat_t set via ns_dyn_mem_init.

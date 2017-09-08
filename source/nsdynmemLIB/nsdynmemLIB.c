@@ -20,6 +20,10 @@
 #include <stdlib.h>
 #include "ns_list.h"
 
+#define FEA_TRACE_SUPPORT
+#include "mbed_trace.h"
+#define TRACE_GROUP "MEMORY"
+
 #ifndef STANDARD_MALLOC
 typedef enum mem_stat_update_t {
     DEV_HEAP_ALLOC_OK,
@@ -305,14 +309,22 @@ void *ns_mem_temporary_alloc(ns_mem_book_t *heap, ns_mem_block_size_t alloc_size
     return ns_mem_internal_alloc(heap, alloc_size, 1);
 }
 
-void *ns_dyn_mem_alloc(ns_mem_block_size_t alloc_size)
+void *ns_dyn_mem_alloc2(ns_mem_block_size_t alloc_size, const char *file, int line)
 {
-    return ns_mem_alloc(default_book, alloc_size);
+    void *result = ns_mem_alloc(default_book, alloc_size);
+    if (result) {
+        tr_debug("MEMMEM -- File: %s, l: %d - %p allocated (size: %u bytes)", file, line, result, alloc_size);
+    }
+    return result;
 }
 
-void *ns_dyn_mem_temporary_alloc(ns_mem_block_size_t alloc_size)
+void *ns_dyn_mem_temporary_alloc2(ns_mem_block_size_t alloc_size, const char *file, int line)
 {
-    return ns_mem_temporary_alloc(default_book, alloc_size);
+    void *result = ns_mem_temporary_alloc(default_book, alloc_size);
+    if (result) {
+        tr_debug("MEMMEM -- File: %s, l: %d - %p temp allocated (size: %u bytes)", file, line, result, alloc_size);
+    }
+    return result;
 }
 
 #ifndef STANDARD_MALLOC
@@ -445,5 +457,8 @@ void ns_mem_free(ns_mem_book_t *book, void *block)
 
 void ns_dyn_mem_free(void *block)
 {
+    if (block) {
+        tr_debug("MEMMEM -- Block: %p freed ", block);
+    }
     ns_mem_free(default_book, block);
 }
