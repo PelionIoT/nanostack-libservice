@@ -46,7 +46,7 @@ struct ns_mem_book {
 static ns_mem_book_t *default_book; // heap pointer for original "ns_" API use
 
 // size of a hole_t in our word units
-#define HOLE_T_SIZE ((sizeof(hole_t) + sizeof(ns_mem_word_size_t) - 1) / sizeof(ns_mem_word_size_t))
+#define HOLE_T_SIZE (ns_mem_word_size_t)((sizeof(hole_t) + sizeof(ns_mem_word_size_t) - 1) / sizeof(ns_mem_word_size_t))
 
 static NS_INLINE hole_t *hole_from_block_start(ns_mem_word_size_t *start)
 {
