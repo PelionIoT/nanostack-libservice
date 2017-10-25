@@ -117,7 +117,7 @@ typedef int_fast32_t int_fast24_t;
 
 /* C11's "alignas" macro, emulated for integer expressions if necessary */
 #ifndef __alignas_is_defined
-#if defined __CC_ARM || defined __TASKING__
+#if defined __CC_ARM || defined __TASKING__ || ( defined(__ARMCC_VERSION) && __ARMCC_VERSION >= 6000000 )
 #define alignas(n) __align(n)
 #define __alignas_is_defined 1
 #elif (__STDC_VERSION__ >= 201112L) || (defined __cplusplus && __cplusplus >= 201103L)
