@@ -127,6 +127,17 @@ NS_INLINE uint_fast24_t common_read_24_bit(const uint8_t data_buf[__static 3]);
 NS_INLINE uint8_t *common_write_24_bit_inverse(uint_fast24_t value, uint8_t ptr[__static 3]);
 
 /*
+ * Common read 24-bit variable from 8-bit pointer.
+ *
+ * Read 24 bits in little-endian byte order.
+ *
+ * \param data_buf pointer where data to be read
+ *
+ * \return 24-bit variable
+ */
+NS_INLINE uint_fast24_t common_read_24_bit_inverse(const uint8_t data_buf[__static 3]);
+
+/*
  * Common write 16-bit variable to 8-bit pointer.
  *
  * Write 16 bits in big-endian (network) byte order.
@@ -438,6 +449,15 @@ COMMON_FUNCTIONS_FN uint8_t *common_write_24_bit_inverse(uint_fast24_t value, ui
     *ptr++ = value >> 8;
     *ptr++ = value >> 16;
     return ptr;
+}
+
+COMMON_FUNCTIONS_FN uint_fast24_t common_read_24_bit_inverse(const uint8_t data_buf[__static 3])
+{
+    uint_fast24_t temp_24;
+    temp_24 =  *data_buf++;
+    temp_24 += (uint_fast24_t)(*data_buf++) << 8;
+    temp_24 += (uint_fast24_t)(*data_buf++) << 16;
+    return temp_24;
 }
 
 COMMON_FUNCTIONS_FN uint8_t *common_write_16_bit(uint16_t value, uint8_t ptr[__static 2])
