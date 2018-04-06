@@ -236,7 +236,9 @@ static void *ns_mem_internal_alloc(ns_mem_book_t *book, const ns_mem_block_size_
         goto done;
     }
 
-    ns_mem_word_size_t block_data_size = -*block_ptr;
+    // Separate declaration from initialization to keep IAR happy as the gotos skip this block.
+    ns_mem_word_size_t block_data_size;
+    block_data_size = -*block_ptr;
     if (block_data_size >= (data_size + 2 + HOLE_T_SIZE)) {
         ns_mem_word_size_t hole_size = block_data_size - data_size - 2;
         ns_mem_word_size_t *hole_ptr;
