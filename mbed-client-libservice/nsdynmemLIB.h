@@ -67,6 +67,8 @@ typedef struct mem_stat_t {
 
 typedef struct ns_mem_book ns_mem_book_t;
 
+void ns_dyn_mem_print(void *heap);
+
 /**
   * \brief Init and set Dynamical heap pointer and length.
   *
@@ -74,7 +76,7 @@ typedef struct ns_mem_book ns_mem_book_t;
   * \param heap_size size of the heap buffer
   * \return None
   */
-extern void ns_dyn_mem_init(void *heap, ns_mem_heap_size_t h_size, void (*passed_fptr)(heap_fail_t), mem_stat_t *info_ptr);
+extern void ns_dyn_mem_init(void *heap, ns_mem_heap_size_t h_size, void (*passed_fptr)(heap_fail_t, void*), mem_stat_t *info_ptr, mem_stat_t *info_ptr_temporary);
 
 
 /**
@@ -108,6 +110,19 @@ extern void *ns_dyn_mem_temporary_alloc(ns_mem_block_size_t alloc_size);
   * \return >0, Pointer to allocated data sector.
   */
 extern void *ns_dyn_mem_alloc(ns_mem_block_size_t alloc_size);
+
+/**
+  * \brief Get pointer to the current mem_stat_t set via ns_dyn_mem_init.
+  *
+  * Get pointer to the statistics information, if one is set during the
+  * initialization. This may be useful for statistics collection purposes.
+  *
+  * Note: the caller may not modify the returned structure.
+  *
+  * \return NULL, no mem_stat_t was given on initialization
+  * \return !=0, Pointer to mem_stat_t.
+  */
+extern const mem_stat_t *ns_dyn_mem_get_mem_stat_temp(void);
 
 /**
   * \brief Get pointer to the current mem_stat_t set via ns_dyn_mem_init.

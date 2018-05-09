@@ -38,12 +38,15 @@ struct ns_mem_book {
     ns_mem_word_size_t     *heap_main;
     ns_mem_word_size_t     *heap_main_end;
     mem_stat_t *mem_stat_info_ptr;
-    void (*heap_failure_callback)(heap_fail_t);
+    void (*heap_failure_callback)(heap_fail_t, void*);
     NS_LIST_HEAD(hole_t, link) holes_list;
     ns_mem_heap_size_t heap_size;
 };
 
-static ns_mem_book_t *default_book; // heap pointer for original "ns_" API use
+static ns_mem_book_t *default_book_static; // heap pointer for original "ns_" API use
+
+static ns_mem_book_t *default_book_temp; // heap pointer for original "ns_" API use
+
 
 // size of a hole_t in our word units
 #define HOLE_T_SIZE ((ns_mem_word_size_t) ((sizeof(hole_t) + sizeof(ns_mem_word_size_t) - 1) / sizeof(ns_mem_word_size_t)))
@@ -61,27 +64,39 @@ static NS_INLINE ns_mem_word_size_t *block_start_from_hole(hole_t *start)
 static void heap_failure(ns_mem_book_t *book, heap_fail_t reason)
 {
     if (book->heap_failure_callback) {
-        book->heap_failure_callback(reason);
+        book->heap_failure_callback(reason, book);
     }
 }
 
 #endif
 
 void ns_dyn_mem_init(void *heap, ns_mem_heap_size_t h_size,
-                     void (*passed_fptr)(heap_fail_t), mem_stat_t *info_ptr)
+                     void (*passed_fptr)(heap_fail_t, void *), mem_stat_t *info_ptr, mem_stat_t *info_ptr_temporary)
 {
-    default_book = ns_mem_init(heap, h_size, passed_fptr, info_ptr);
+    ns_mem_heap_size_t static_ns_heap_size = (h_size/1000)*500;  // This is just an example split, needs to be discussed and correctly sized
+    default_book_static = ns_mem_init(heap, static_ns_heap_size, passed_fptr, info_ptr);
+    printf("default_book_static->heap_main %x, default_book_static->heap_size %d\n", default_book_static->heap_main, default_book_static->heap_size);
+    default_book_temp = ns_mem_init(heap + static_ns_heap_size, h_size - static_ns_heap_size, passed_fptr, info_ptr_temporary);
+    printf("default_book_temp->heap_main %x, default_book_temp->heap_size %d\n", default_book_temp->heap_main, default_book_temp->heap_size);
 }
 
 const mem_stat_t *ns_dyn_mem_get_mem_stat(void)
 {
 #ifndef STANDARD_MALLOC
-    return ns_mem_get_mem_stat(default_book);
+    return ns_mem_get_mem_stat(default_book_static);
 #else
     return NULL;
 #endif
 }
 
+const mem_stat_t *ns_dyn_mem_get_mem_stat_temp(void)
+{
+#ifndef STANDARD_MALLOC
+    return ns_mem_get_mem_stat(default_book_temp);
+#else
+    return NULL;
+#endif
+}
 
 ns_mem_book_t *ns_mem_init(void *heap, ns_mem_heap_size_t h_size,
                          void (*passed_fptr)(heap_fail_t),
@@ -129,6 +144,13 @@ ns_mem_book_t *ns_mem_init(void *heap, ns_mem_heap_size_t h_size,
     book->heap_failure_callback = passed_fptr;
 
     return book;
+}
+
+void ns_dyn_mem_print(void *heap)
+{
+    ns_mem_book_t *book = (ns_mem_book_t *)heap;
+    printf("book->heap_main: %x; book->heap_size: %d\n", book->heap_main, book->heap_size);
+
 }
 
 const mem_stat_t *ns_mem_get_mem_stat(ns_mem_book_t *heap)
@@ -300,19 +322,14 @@ void *ns_mem_alloc(ns_mem_book_t *heap, ns_mem_block_size_t alloc_size)
     return ns_mem_internal_alloc(heap, alloc_size, -1);
 }
 
-void *ns_mem_temporary_alloc(ns_mem_book_t *heap, ns_mem_block_size_t alloc_size)
-{
-    return ns_mem_internal_alloc(heap, alloc_size, 1);
-}
-
 void *ns_dyn_mem_alloc(ns_mem_block_size_t alloc_size)
 {
-    return ns_mem_alloc(default_book, alloc_size);
+    return ns_mem_alloc(default_book_static, alloc_size);
 }
 
 void *ns_dyn_mem_temporary_alloc(ns_mem_block_size_t alloc_size)
 {
-    return ns_mem_temporary_alloc(default_book, alloc_size);
+    return ns_mem_alloc(default_book_temp, alloc_size);
 }
 
 #ifndef STANDARD_MALLOC
@@ -445,5 +462,17 @@ void ns_mem_free(ns_mem_book_t *book, void *block)
 
 void ns_dyn_mem_free(void *block)
 {
-    ns_mem_free(default_book, block);
+    if (!block) {
+        return;
+    }
+
+    ns_mem_word_size_t *ptr = block;
+
+    ptr --;
+
+    if (ptr >= default_book_temp->heap_main && ptr < default_book_temp->heap_main_end) {
+        ns_mem_free(default_book_temp, block);
+    } else {
+        ns_mem_free(default_book_static, block);
+    }
 }
