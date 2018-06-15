@@ -32,10 +32,10 @@ extern "C" {
 #include "ns_types.h"
 
 // Added to maintain backward compatibility with older implementation of ns_dyn_mem APIs
-#define NSDYNMEMLIB_API_VERSION 2
+#define NSDYNMEMLIB_API_VERSION 3
 
-typedef uint16_t ns_mem_block_size_t; //external interface unsigned heap block size type
-typedef uint16_t ns_mem_heap_size_t; //total heap size type.
+typedef size_t ns_mem_block_size_t; //external interface unsigned heap block size type
+typedef size_t ns_mem_heap_size_t; //total heap size type.
 
 /*!
  * \enum heap_fail_t

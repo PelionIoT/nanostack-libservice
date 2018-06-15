@@ -179,8 +179,7 @@ static ns_mem_word_size_t convert_allocation_size(ns_mem_book_t *book, ns_mem_bl
 // Checks that block length indicators are valid
 // Block has format: Size of data area [1 word] | data area [abs(size) words]| Size of data area [1 word]
 // If Size is negative it means area is unallocated
-// For direction, use 1 for direction up and -1 for down
-static int8_t ns_mem_block_validate(ns_mem_word_size_t *block_start, int direction)
+static int8_t ns_mem_block_validate(ns_mem_word_size_t *block_start)
 {
     int8_t ret_val = -1;
     ns_mem_word_size_t *end = block_start;
@@ -220,7 +219,7 @@ static void *ns_mem_internal_alloc(ns_mem_book_t *book, const ns_mem_block_size_
                                   : ns_list_get_previous(&book->holes_list, cur_hole)
         ) {
         ns_mem_word_size_t *p = block_start_from_hole(cur_hole);
-        if (ns_mem_block_validate(p, direction) != 0 || *p >= 0) {
+        if (ns_mem_block_validate(p) != 0 || *p >= 0) {
             //Validation failed, or this supposed hole has positive (allocated) size
             heap_failure(book, NS_DYN_MEM_HEAP_SECTOR_CORRUPTED);
             break;
@@ -427,7 +426,7 @@ void ns_mem_free(ns_mem_book_t *book, void *block)
     } else if (size < 0) {
         heap_failure(book, NS_DYN_MEM_DOUBLE_FREE);
     } else {
-        if (ns_mem_block_validate(ptr, 1) != 0) {
+        if (ns_mem_block_validate(ptr) != 0) {
             heap_failure(book, NS_DYN_MEM_HEAP_SECTOR_CORRUPTED);
         } else {
             ns_mem_free_and_merge_with_adjacent_blocks(book, ptr, size);
