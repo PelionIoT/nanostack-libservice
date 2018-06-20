@@ -41,12 +41,15 @@ struct ns_mem_book {
     void (*heap_failure_callback)(heap_fail_t);
     NS_LIST_HEAD(hole_t, link) holes_list;
     ns_mem_heap_size_t heap_size;
+    ns_mem_heap_size_t temporary_alloc_heap_limit;   /* Reserved heap limit for temporary alloc to succeed */
 };
 
 static ns_mem_book_t *default_book; // heap pointer for original "ns_" API use
 
 // size of a hole_t in our word units
 #define HOLE_T_SIZE ((ns_mem_word_size_t) ((sizeof(hole_t) + sizeof(ns_mem_word_size_t) - 1) / sizeof(ns_mem_word_size_t)))
+
+#define TEMPORARY_ALLOC_FILL_FACTOR 95  /* Default percentage of allocated heap that temporary allocation can't exceed */
 
 static NS_INLINE hole_t *hole_from_block_start(ns_mem_word_size_t *start)
 {
@@ -124,6 +127,7 @@ ns_mem_book_t *ns_mem_init(void *heap, ns_mem_heap_size_t h_size,
         memset(book->mem_stat_info_ptr, 0, sizeof(mem_stat_t));
         book->mem_stat_info_ptr->heap_sector_size = book->heap_size;
     }
+    book->temporary_alloc_heap_limit = book->heap_size/100 * TEMPORARY_ALLOC_FILL_FACTOR;
 #endif
     //There really is no support to standard malloc in this library anymore
     book->heap_failure_callback = passed_fptr;
@@ -138,6 +142,31 @@ const mem_stat_t *ns_mem_get_mem_stat(ns_mem_book_t *heap)
 #else
     return NULL;
 #endif
+}
+
+int ns_mem_set_temporary_alloc_fill_factor(ns_mem_book_t *book, uint8_t reserved_heap_fill_factor)
+{
+#ifndef STANDARD_MALLOC
+    if (reserved_heap_fill_factor < 10 || reserved_heap_fill_factor > 100) {
+        // illegal percentages
+        return -1;
+    }
+
+    if (!book || !book->mem_stat_info_ptr) {
+        // no book or mem_stats
+        return -2;
+    }
+    book->temporary_alloc_heap_limit = book->heap_size/100 * reserved_heap_fill_factor;
+
+    return 0;
+#else
+    return -3;
+#endif
+}
+
+int ns_dyn_mem_set_temporary_alloc_fill_factor(uint8_t reserved_heap_fill_factor)
+{
+    return ns_mem_set_temporary_alloc_fill_factor(default_book, reserved_heap_fill_factor);
 }
 
 #ifndef STANDARD_MALLOC
@@ -200,6 +229,13 @@ static void *ns_mem_internal_alloc(ns_mem_book_t *book, const ns_mem_block_size_
         /* We can not do anything except return NULL because we can't find book
            keeping block */
         return NULL;
+    }
+
+    if (book->mem_stat_info_ptr && direction == 1) {
+        if (book->mem_stat_info_ptr->heap_sector_allocated_bytes > book->temporary_alloc_heap_limit) {
+            /* Not enough heap for temporary memory allocation */
+            return NULL;
+        }
     }
 
     ns_mem_word_size_t *block_ptr = NULL;
