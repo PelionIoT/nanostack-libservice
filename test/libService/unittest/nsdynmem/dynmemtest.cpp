@@ -136,6 +136,81 @@ TEST(dynmem, ns_dyn_mem_temporary_alloc)
     free(heap);
 }
 
+TEST(dynmem, ns_dyn_mem_temporary_alloc_with_heap_threshold)
+{
+    uint16_t size = 1000;
+    mem_stat_t info;
+    void *p1, *p2;
+    int ret_val;
+    uint8_t *heap = (uint8_t*)malloc(size);
+    CHECK(NULL != heap);
+    reset_heap_error();
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
+    CHECK(!heap_have_failed());
+
+    // test1: temporary alloc will fail if there is less than 5% heap free
+    p1 = ns_dyn_mem_temporary_alloc((size-72)*0.96);
+    CHECK(!heap_have_failed());
+    CHECK(p1);
+    p2 = ns_dyn_mem_temporary_alloc((size-72)*0.02);
+    CHECK(p2 == NULL);
+    CHECK(!heap_have_failed());
+    CHECK(info.heap_alloc_fail_cnt == 1);
+
+    // Test2, disable threshold feature and try p2 allocation again
+    ns_dyn_mem_set_temporary_alloc_free_heap_threshold(0, 0);
+    p2 = ns_dyn_mem_temporary_alloc((size-72)*0.02);
+    CHECK(!heap_have_failed());
+    CHECK(p2);
+    ns_dyn_mem_free(p1);
+    ns_dyn_mem_free(p2);
+    CHECK(info.heap_alloc_fail_cnt == 1);
+    CHECK(info.heap_sector_alloc_cnt == 0);
+
+    // Test3, enable feature by free heap percentage
+    ns_dyn_mem_set_temporary_alloc_free_heap_threshold(40, 0);
+    p1 = ns_dyn_mem_temporary_alloc((size-72)*0.65);
+    CHECK(p1);
+    p2 = ns_dyn_mem_temporary_alloc((size-72)*0.10);
+    CHECK(p2==NULL);
+    ns_dyn_mem_free(p1);
+    CHECK(!heap_have_failed());
+    CHECK(info.heap_alloc_fail_cnt == 2);
+    CHECK(info.heap_sector_alloc_cnt == 0);
+
+    // Test4, enable feature by free heap amount
+    ns_dyn_mem_set_temporary_alloc_free_heap_threshold(0, 200);
+    p1 = ns_dyn_mem_temporary_alloc(size-72-100 /*828 bytes */);
+    CHECK(p1);
+    p2 = ns_dyn_mem_temporary_alloc(1);
+    CHECK(p2==NULL);
+    ns_dyn_mem_free(p1);
+
+    // Test5, illegal API parameters
+    ret_val = ns_dyn_mem_set_temporary_alloc_free_heap_threshold(0, size/2);
+    CHECK(ret_val==-2);
+    ret_val = ns_dyn_mem_set_temporary_alloc_free_heap_threshold(0, size*2);
+    CHECK(ret_val==-2);
+    ret_val = ns_dyn_mem_set_temporary_alloc_free_heap_threshold(51, 0);
+    CHECK(ret_val==-2);
+    ret_val = ns_dyn_mem_set_temporary_alloc_free_heap_threshold(255, 0);
+    CHECK(ret_val==-2);
+
+    CHECK(!heap_have_failed());
+    CHECK(info.heap_alloc_fail_cnt == 3);
+    CHECK(info.heap_sector_alloc_cnt == 0);
+    free(heap);
+
+    // Test6, feature is disabled if info is not set
+    heap = (uint8_t*)malloc(size);
+    CHECK(NULL != heap);
+    ns_dyn_mem_init(heap, size, &heap_fail_callback, NULL);
+    ret_val = ns_dyn_mem_set_temporary_alloc_free_heap_threshold(0, 0);
+    CHECK(ret_val==-1);
+    CHECK(!heap_have_failed());
+    free(heap);
+}
+
 TEST(dynmem, test_both_allocs_with_hole_usage) {
     uint16_t size = 112;
     mem_stat_t info;
