@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 ARM Limited. All rights reserved.
+ * Copyright (c) 2014-2018 ARM Limited. All rights reserved.
  * SPDX-License-Identifier: Apache-2.0
  * Licensed under the Apache License, Version 2.0 (the License); you may
  * not use this file except in compliance with the License.
@@ -123,18 +123,18 @@ extern void *ns_dyn_mem_alloc(ns_mem_block_size_t alloc_size);
 extern const mem_stat_t *ns_dyn_mem_get_mem_stat(void);
 
 /**
-  * \brief Set temporary allocation memory fill factor.
+  * \brief Set amount of free heap that must be available for temporary memory allocation to succeed.
   *
-  * Temporary memory allocation will not allocate memory if heap fill factor is
-  * already reached.
+  * Temporary memory allocation will fail if system does not have defined amount of heap free.
   *
   * Note: the caller must set mem_stat_t structure in initialization.
   *
-  * \param reserved_heap_fill_factor percentage of reserved heap that can't be exceeded by temporary allocation
+  * \param free_heap_percentage percentage of total heap that must be free for temporary memory allocation. Set free_heap_amount to 0 when this percentage value.
+  * \param free_heap_amount Amount of free heap that must be free for temporary memory allocation. This value takes preference over percentage parameter value.
   *
   * \return 0 on success, <0 otherwise
   */
-extern int ns_dyn_mem_set_temporary_alloc_fill_factor(uint8_t reserved_heap_fill_factor);
+extern int ns_dyn_mem_set_temporary_alloc_free_heap_threshold(uint8_t free_heap_percentage, ns_mem_heap_size_t free_heap_amount);
 
 /**
   * \brief Init and set Dynamical heap pointer and length.
@@ -196,22 +196,23 @@ extern void *ns_mem_alloc(ns_mem_book_t *book, ns_mem_block_size_t alloc_size);
 extern const mem_stat_t *ns_mem_get_mem_stat(ns_mem_book_t *book);
 
 /**
-  * \brief Set temporary allocation heap fill factor.
+  * \brief Set amount of free heap that must be available for temporary memory allocation to succeed.
   *
-  * Temporary memory allocation will not allocate memory if heap fill factor is
-  * already reached.
+  * Temporary memory allocation will fail if system does not have defined amount of heap free.
   *
   * Note: the caller must set mem_stat_t structure in initialization.
   *
   * \param book Address of book keeping structure
-  * \param reserved_heap_fill_factor percentage of reserved heap that can't be exceeded by temporary allocation
+  * \param free_heap_percentage percentage of total heap that must be free for temporary memory allocation. Set free_heap_amount to 0 when using percentage value.
+  * \param free_heap_amount Amount of free heap that must be free for temporary memory allocation. This value takes preference over the percentage parameter value.
   *
   * \return 0 on success, <0 otherwise
   */
-extern int ns_mem_set_temporary_alloc_fill_factor(ns_mem_book_t *book, uint8_t reserved_heap_fill_factor);
+extern int ns_mem_set_temporary_alloc_free_heap_threshold(ns_mem_book_t *book, uint8_t free_heap_percentage, ns_mem_heap_size_t free_heap_amount);
 
 #ifdef __cplusplus
 }
 #endif
 #endif /* NSDYNMEMLIB_H_ */
+
 
