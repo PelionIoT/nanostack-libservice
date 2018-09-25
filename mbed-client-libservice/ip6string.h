@@ -58,9 +58,10 @@ uint_fast8_t ip6_prefix_tos(const void *prefix, uint_fast8_t prefix_len, char *p
  *
  * \param ip6addr IPv6 address in string format.
  * \param len Lenght of ipv6 string, maximum of 41.
- * \param dest buffer for address. MUST be 16 bytes.
+ * \param dest buffer for address. MUST be 16 bytes. Filled with 0 on error.
+ * \return boolean set to true if conversion succeed, false if it didn't
  */
-void stoip6(const char *ip6addr, size_t len, void *dest);
+bool stoip6(const char *ip6addr, size_t len, void *dest);
 /**
  * Find out numeric IPv6 address prefix length.
  *
