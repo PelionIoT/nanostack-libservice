@@ -80,7 +80,7 @@ unsigned char sipv6_prefixlength(const char *ip6addr);
  *
  * \return 0 on success, negative value otherwise. prefix_len_out contains prefix length.
   */
-int stoip6_prefix(const char *ip6addr, void *dest, int16_t *prefix_len_out);
+int stoip6_prefix(const char *ip6addr, void *dest, int_fast16_t *prefix_len_out);
 
 #ifdef __cplusplus
 }
