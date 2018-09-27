@@ -69,6 +69,19 @@ void stoip6(const char *ip6addr, size_t len, void *dest);
  */
 unsigned char sipv6_prefixlength(const char *ip6addr);
 
+/**
+ * Convert numeric IPv6 address string with prefix to a binary.
+ *
+ * IPv4 tunneling addresses are not covered.
+ *
+ * \param ip6addr IPv6 address in string format.
+ * \param dest buffer for address. MUST be 16 bytes.
+ * \param prefix_len_out length of prefix
+ *
+ * \return 0 on success, negative value otherwise. prefix_len_out contains prefix length.
+  */
+int stoip6_prefix(const char *ip6addr, void *dest, int16_t *prefix_len_out);
+
 #ifdef __cplusplus
 }
 #endif
