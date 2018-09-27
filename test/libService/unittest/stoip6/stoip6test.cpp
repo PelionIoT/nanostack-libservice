@@ -247,7 +247,7 @@ const uint8_t hex_prefix_addr[][16] =
     { 0x20, 0x04, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 },       // 7
 };
 
-const int16_t prefix_len_tbl[] = {64, 60, 48, -1, 99, -1, -1};
+const int16_t prefix_len_tbl[] = {64, 60, 48, 0, 99, 0, -1};
 
 TEST_GROUP(stoip6_3)
 {

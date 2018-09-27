@@ -70,7 +70,8 @@ void stoip6(const char *ip6addr, size_t len, void *dest)
         memset(addr, 0, 16 - field_no * 2);
     }
 }
-unsigned char  sipv6_prefixlength(const char *ip6addr)
+
+unsigned char sipv6_prefixlength(const char *ip6addr)
 {
     char *ptr = strchr(ip6addr, '/');
     if (ptr) {
@@ -82,27 +83,20 @@ unsigned char  sipv6_prefixlength(const char *ip6addr)
 int stoip6_prefix(const char *ip6addr, void *dest, int16_t *prefix_len_out)
 {
     size_t addr_len;
-    unsigned char prefix_length;
-
-    if (!ip6addr) {
-        return -1;
-    }
 
     if (prefix_len_out) {
         *prefix_len_out = -1;
     }
 
-   addr_len = strlen(ip6addr);
-   prefix_length = sipv6_prefixlength(ip6addr);
-   if (prefix_length) {
-       char *ptr = strchr(ip6addr, '/');
-       if (ptr) {
-           addr_len = ptr - ip6addr;
-           if (prefix_len_out) {
-               *prefix_len_out = (int16_t)prefix_length;
-           }
-       }
-   }
+    addr_len = strlen(ip6addr);
+    char *ptr = strchr(ip6addr, '/');
+    if (ptr) {
+        addr_len = ptr - ip6addr;
+        if (prefix_len_out) {
+            *prefix_len_out = strtoul(ptr + 1, 0, 10);
+        }
+    }
+
 
    stoip6(ip6addr, addr_len, dest);
 

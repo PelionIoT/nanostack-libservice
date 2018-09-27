@@ -76,7 +76,7 @@ unsigned char sipv6_prefixlength(const char *ip6addr);
  *
  * \param ip6addr IPv6 address in string format.
  * \param dest buffer for address. MUST be 16 bytes.
- * \param prefix_len_out length of prefix
+ * \param prefix_len_out length of prefix, is set to -1 if no prefix given
  *
  * \return 0 on success, negative value otherwise. prefix_len_out contains prefix length.
   */
