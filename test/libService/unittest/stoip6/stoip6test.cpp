@@ -221,3 +221,62 @@ TEST(stoip6_2, test_2_12)
     CHECK(0 == memcmp(hex_addr[i], buf, 16));
 }
 
+/***********************************************************/
+/* Third test group for stoip6_prefix */
+
+const char string_prefix_addr[][40] =
+{
+    "2001:db8::1:0:0:1/64",     // 1
+    "2001::/60",                // 2
+    "::1/48",                   // 3
+    "::/00",                    // 4
+    "2002::02/99",              // 5
+    "2003::03/",                // 6
+    "2004::04",                 // 7
+    "2005::05/2000",            // 8
+    "2005::05/-1",              // 9
+};
+
+
+const uint8_t hex_prefix_addr[][16] =
+{
+    { 0x20, 0x01, 0xd, 0xb8, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1 },  // 1
+    { 0x20, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },       // 2
+    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 },                            // 3
+    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },                            // 4
+    { 0x20, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2 },       // 5
+    { 0x20, 0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3 },       // 6
+    { 0x20, 0x04, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 },       // 7
+    { 0x20, 0x05, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5 },       // 8
+    { 0x20, 0x05, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5 },       // 9
+};
+
+const int_fast16_t prefix_len_tbl[] = {64, 60, 48, 0, 99, 0, -1, -1, -1};
+const int prefix_status_tbl[] = {0, 0, 0, 0, 0, 0, 0, -1, -1};
+
+TEST_GROUP(stoip6_3)
+{
+    void setup() {
+    }
+
+    void teardown() {
+    }
+};
+
+TEST(stoip6_3, stoip6_prefix_test)
+{
+    for (int i = 0; i < 9; i++) {
+        uint8_t ip[16];
+        int_fast16_t prefix_len;
+        int result;
+        const char *addr = &string_prefix_addr[i][0];
+
+        result = stoip6_prefix(addr, ip, &prefix_len);
+        CHECK(result == prefix_status_tbl[i]);
+        if (result == 0) {
+            CHECK(0 == memcmp(ip, &hex_prefix_addr[i][0], 16));
+            CHECK(prefix_len == prefix_len_tbl[i])
+        }
+    }
+}
+

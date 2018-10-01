@@ -70,7 +70,8 @@ void stoip6(const char *ip6addr, size_t len, void *dest)
         memset(addr, 0, 16 - field_no * 2);
     }
 }
-unsigned char  sipv6_prefixlength(const char *ip6addr)
+
+unsigned char sipv6_prefixlength(const char *ip6addr)
 {
     char *ptr = strchr(ip6addr, '/');
     if (ptr) {
@@ -78,6 +79,41 @@ unsigned char  sipv6_prefixlength(const char *ip6addr)
     }
     return 0;
 }
+
+int stoip6_prefix(const char *ip6addr, void *dest, int_fast16_t *prefix_len_out)
+{
+    size_t addr_len, total_len;
+    int_fast16_t prefix_length;
+
+    if (prefix_len_out) {
+        *prefix_len_out = -1;
+    }
+
+    total_len = addr_len = strlen(ip6addr);
+    const char *ptr = strchr(ip6addr, '/');
+    if (ptr) {
+        addr_len = ptr - ip6addr;
+        if (prefix_len_out) {
+            if (total_len - addr_len > 3) {
+                /* too many digits in prefix */
+                return -1;
+            }
+
+            prefix_length = strtoul(ptr + 1, 0, 10);
+            if (prefix_length <  0 || prefix_length > 128) {
+                // prefix value illegal */
+                return -1;
+            }
+
+            *prefix_len_out = prefix_length;
+        }
+    }
+
+   stoip6(ip6addr, addr_len, dest);
+
+   return 0;
+}
+
 static uint16_t hex(const char *p)
 {
     uint16_t val = 0;
