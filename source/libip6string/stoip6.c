@@ -131,7 +131,7 @@ int stoip6_prefix(const char *ip6addr, void *dest, int_fast16_t *prefix_len_out)
 
             prefix_length = strtoul(ptr + 1, 0, 10);
             if (prefix_length <  0 || prefix_length > 128) {
-                // prefix value illegal */
+                /* prefix value illegal */
                 return -1;
             }
 
@@ -139,9 +139,12 @@ int stoip6_prefix(const char *ip6addr, void *dest, int_fast16_t *prefix_len_out)
         }
     }
 
-   stoip6(ip6addr, addr_len, dest);
+    if (!stoip6(ip6addr, addr_len, dest)) {
+        /* parser failure */
+        return -1;
+    }
 
-   return 0;
+    return 0;
 }
 
 static bool is_hex(char c)
