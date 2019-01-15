@@ -95,11 +95,13 @@ void ns_dyn_mem_init(uint8_t *heap, uint16_t h_size, void (*passed_fptr)(heap_fa
     ns_list_init(&holes_list);
     ns_list_add_to_start(&holes_list, hole_from_block_start(heap_main));
 
+
     //RESET Memory by Hea Len
     if (info_ptr) {
         mem_stat_info_ptr = info_ptr;
         memset(mem_stat_info_ptr, 0, sizeof(mem_stat_t));
         mem_stat_info_ptr->heap_sector_size = heap_size;
+        mem_stat_info_ptr->heap_free_sector_cnt = 1;
     }
 #endif
     heap_failure_callback = passed_fptr;
@@ -234,6 +236,9 @@ static void *ns_dyn_mem_internal_alloc(const int16_t alloc_size, int direction)
         // Not enough room for a left-over hole, so use the whole block
         data_size = block_data_size;
         ns_list_remove(&holes_list, hole_from_block_start(block_ptr));
+        if (mem_stat_info_ptr) {
+            mem_stat_info_ptr->heap_free_sector_cnt--;
+        }
     }
     block_ptr[0] = data_size;
     block_ptr[1 + data_size] = data_size;
@@ -324,6 +329,9 @@ static void ns_free_and_merge_with_adjacent_blocks(int *cur_block, int data_size
         // Optimisation - note our position for insertion below.
         before = ns_list_get_next(&holes_list, existing_end);
         ns_list_remove(&holes_list, existing_end);
+        if (mem_stat_info_ptr) {
+            mem_stat_info_ptr->heap_free_sector_cnt--;
+        }
     }
     if (existing_start) {
         // Extending hole described by "existing_start" upwards.
@@ -347,6 +355,9 @@ static void ns_free_and_merge_with_adjacent_blocks(int *cur_block, int data_size
                 ns_list_add_before(&holes_list, before, to_add);
             } else {
                 ns_list_add_to_end(&holes_list, to_add);
+            }
+            if (mem_stat_info_ptr) {
+                mem_stat_info_ptr->heap_free_sector_cnt++;
             }
 
         }
@@ -398,4 +409,20 @@ void ns_dyn_mem_free(void *block)
     free(block);
     platform_exit_critical();
 #endif
+}
+
+void ns_dyn_mem_free_sectors_read(void (*passed_fptr)(void *, int))
+{
+    platform_enter_critical();
+    int *p;
+
+    for (hole_t *cur_hole = ns_list_get_first(&holes_list); cur_hole;
+            cur_hole = ns_list_get_next(&holes_list, cur_hole) ) {
+
+        p = block_start_from_hole(cur_hole);
+        passed_fptr(p, -*p);
+    }
+
+    platform_exit_critical();
+
 }
