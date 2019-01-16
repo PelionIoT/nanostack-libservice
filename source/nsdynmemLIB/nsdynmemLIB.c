@@ -413,6 +413,7 @@ void ns_dyn_mem_free(void *block)
 
 void ns_dyn_mem_free_sectors_read(void (*passed_fptr)(void *, int))
 {
+#ifndef STANDARD_MALLOC
     platform_enter_critical();
     int *p;
 
@@ -424,5 +425,6 @@ void ns_dyn_mem_free_sectors_read(void (*passed_fptr)(void *, int))
     }
 
     platform_exit_critical();
+#endif
 
 }
