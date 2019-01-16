@@ -49,6 +49,7 @@ typedef struct mem_stat_t {
     /*Heap stats*/
     int16_t heap_sector_size;                   /**< Heap total Sector len. */
     int16_t heap_sector_alloc_cnt;              /**< Reserved Heap sector cnt. */
+    int16_t heap_free_sector_cnt;               /**< Free memory sectors cnt  */
     int16_t heap_sector_allocated_bytes;        /**< Reserved Heap data in bytes. */
     int16_t heap_sector_allocated_bytes_max;    /**< Reserved Heap data in bytes max value. */
     uint32_t heap_alloc_total_bytes;            /**< Total Heap allocated bytes. */
