@@ -111,6 +111,16 @@ extern void *ns_dyn_mem_alloc(int16_t alloc_size);
   */
 extern const mem_stat_t *ns_dyn_mem_get_mem_stat(void);
 
+/**
+  * \brief Read free sectors size's.
+  *
+  *
+  * Note: Storage size info to buffer inside callback.
+  *
+  * \param passed_fptr function callback whic is called by library which give sector pointer and sector size of int's
+  */
+void ns_dyn_mem_free_sectors_read(void (*passed_fptr)(void *, int));
+
 #ifdef __cplusplus
 }
 #endif
