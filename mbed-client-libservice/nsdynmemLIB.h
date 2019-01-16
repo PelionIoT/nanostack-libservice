@@ -119,7 +119,7 @@ extern const mem_stat_t *ns_dyn_mem_get_mem_stat(void);
   *
   * \param passed_fptr function callback whic is called by library which give sector pointer and sector size of int's
   */
-void ns_dyn_mem_free_sectors_read(void (*passed_fptr)(void *, int));
+extern void ns_dyn_mem_free_sectors_read(void (*passed_fptr)(void *, int));
 
 #ifdef __cplusplus
 }
