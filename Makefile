@@ -1,3 +1,5 @@
+# Copyright (c) 2019 ARM Limited
+# SPDX-License-Identifier: Apache-2.0
 SRCS := \
 source/IPv6_fcf_lib/ip_fsc.c \
 source/libBits/common_functions.c \
