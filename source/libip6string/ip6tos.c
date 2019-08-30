@@ -81,7 +81,7 @@ uint_fast8_t ip6tos(const void *ip6addr, char *p)
         part = (part << 8) | *addr++;
         n++;
 
-        p += sprintf(p, "%"PRIxFAST16, part);
+        p += sprintf(p, "%"PRIx16, part);
 
         /* One iteration writes "part:" rather than ":part", and has the
          * explicit check for n == 8 below, to allow easy extension for
@@ -112,7 +112,7 @@ uint_fast8_t ip6_prefix_tos(const void *prefix, uint_fast8_t prefix_len, char *p
     bitcopy(addr, prefix, prefix_len);
     wptr += ip6tos(addr, wptr);
     // Add the prefix length part of the string
-    wptr += sprintf(wptr, "/%"PRIuFAST8, prefix_len);
+    wptr += sprintf(wptr, "/%"PRIu8, prefix_len);
 
     // Return total length of generated string
     return wptr - p;

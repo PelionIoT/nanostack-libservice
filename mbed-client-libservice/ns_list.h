@@ -140,6 +140,20 @@ typedef struct ns_list {
 /** \brief Internal macro defining a list head, given the offset to the link pointer
  * The +1 allows for link_offset being 0 - we can't declare a 0-size array
  */
+
+// for zephyr
+#define NS_LIST_HEAD_BY_OFFSET_(entry_type, link_offset) \
+union \
+{ \
+    ns_list_t slist; \
+    NS_FUNNY_COMPARE_OK \
+    NS_STATIC_ASSERT(link_offset <= UINT8_MAX, "link offset too large") \
+    NS_FUNNY_COMPARE_RESTORE \
+    char (*offset)[link_offset + 1]; \
+    entry_type *type; \
+}
+
+/*
 #define NS_LIST_HEAD_BY_OFFSET_(entry_type, link_offset) \
 union \
 { \
@@ -150,6 +164,7 @@ union \
     char (*offset)[link_offset + 1]; \
     entry_type *type; \
 }
+*/
 
 /** \brief Get offset of link field in entry.
  * \return `(ns_list_offset_t)` The offset of the link field for entries on the specified list

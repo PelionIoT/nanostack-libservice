@@ -304,14 +304,18 @@ void *ns_mem_temporary_alloc(ns_mem_book_t *heap, ns_mem_block_size_t alloc_size
 {
     return ns_mem_internal_alloc(heap, alloc_size, 1);
 }
-
+static int totalAllocCount = 0;
 void *ns_dyn_mem_alloc(ns_mem_block_size_t alloc_size)
 {
-    return ns_mem_alloc(default_book, alloc_size);
+    totalAllocCount+=alloc_size;
+    void* allocated = ns_mem_alloc(default_book, alloc_size);
+    //printf("ns_dyn_mem_alloc to: %p with size %u (total %u)\n", allocated, alloc_size, totalAllocCount );
+    return allocated;
 }
 
 void *ns_dyn_mem_temporary_alloc(ns_mem_block_size_t alloc_size)
 {
+    //printf("ns_dyn_mem_temporary_alloc: %u\n", alloc_size);
     return ns_mem_temporary_alloc(default_book, alloc_size);
 }
 
