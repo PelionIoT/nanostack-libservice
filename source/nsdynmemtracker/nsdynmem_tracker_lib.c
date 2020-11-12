@@ -18,20 +18,22 @@
 #include <string.h>
 #include "ns_types.h"
 #include "nsdynmem_tracker_lib.h"
-#include "mbed_trace.h"
 #include "platform/arm_hal_interrupt.h"
 #include "nsdynmemLIB.h"
 
 #if NSDYNMEM_TRACKER_ENABLED==1
 
-#define TRACE_GROUP "memA"
-
 static int8_t ns_dyn_mem_tracker_lib_find_free_index(ns_dyn_mem_tracker_lib_conf_t *conf, uint32_t *index);
 static void ns_dyn_mem_tracker_lib_permanent_value_set(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, bool new_value);
 static void ns_dyn_mem_tracker_lib_permanent_printed_value_set(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, bool new_value);
 
-void ns_dyn_mem_tracker_lib_alloc(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, const char *function, uint32_t line, void *block, uint32_t alloc_size)
+int8_t ns_dyn_mem_tracker_lib_alloc(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, const char *function, uint32_t line, void *block, uint32_t alloc_size)
 {
+    // Allocation failed
+    if (block == NULL) {
+        return 0;
+    }
+
     platform_enter_critical();
 
     // If dynamic memory blocks are not set, calls allocator
@@ -39,7 +41,7 @@ void ns_dyn_mem_tracker_lib_alloc(ns_dyn_mem_tracker_lib_conf_t *conf, void *cal
         conf->mem_blocks = conf->alloc_mem_blocks(conf->mem_blocks, &conf->mem_blocks_count);
         if (conf->mem_blocks == NULL) {
             platform_exit_critical();
-            return;
+            return -1;
         }
     }
 
@@ -48,13 +50,13 @@ void ns_dyn_mem_tracker_lib_alloc(ns_dyn_mem_tracker_lib_conf_t *conf, void *cal
         conf->mem_blocks = conf->alloc_mem_blocks(conf->mem_blocks, &conf->mem_blocks_count);
         if (conf->mem_blocks == NULL) {
             platform_exit_critical();
-            return;
+            return -1;
         }
     }
 
     if (ns_dyn_mem_tracker_lib_find_free_index(conf, &free_index) < 0) {
         platform_exit_critical();
-        return;
+        return -1;
     }
 
     conf->mem_blocks[free_index].block = block;
@@ -66,35 +68,57 @@ void ns_dyn_mem_tracker_lib_alloc(ns_dyn_mem_tracker_lib_conf_t *conf, void *cal
     conf->mem_blocks[free_index].permanent = false;
     conf->mem_blocks[free_index].permanent_printed = false;
 
+    if (free_index > conf->last_mem_block_index) {
+        conf->last_mem_block_index = free_index;
+    }
+
+    conf->allocated_memory += alloc_size;
+
     // Sets all allocations for the caller not permanent, since new allocation
     ns_dyn_mem_tracker_lib_permanent_value_set(conf, caller_addr, false);
     ns_dyn_mem_tracker_lib_permanent_printed_value_set(conf, caller_addr, false);
 
     platform_exit_critical();
+
+    return 0;
 }
 
-void ns_dyn_mem_tracker_lib_free(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, const char *function, uint32_t line, void *block)
+int8_t ns_dyn_mem_tracker_lib_free(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, const char *function, uint32_t line, void *block)
 {
     (void) function;
     (void) line;
 
-    if (conf->mem_blocks == NULL) {
-        return;
+    // No memory block or no allocations made
+    if (block == NULL || conf->mem_blocks == NULL) {
+        return 0;
     }
 
     platform_enter_critical();
 
     bool block_freed = false;
 
-    for (uint32_t index = 0; index < conf->mem_blocks_count; index++) {
+    for (uint32_t index = 0; index <= conf->last_mem_block_index; index++) {
         if (conf->mem_blocks[index].block == block) {
+            conf->allocated_memory -= conf->mem_blocks[index].size;
+
             conf->mem_blocks[index].block = NULL;
             conf->mem_blocks[index].caller_addr = NULL;
+            conf->mem_blocks[index].size = 0;
             conf->mem_blocks[index].lifetime = 0;
             conf->mem_blocks[index].function = NULL;
             conf->mem_blocks[index].line = 0;
             conf->mem_blocks[index].permanent = false;
             conf->mem_blocks[index].permanent_printed = false;
+
+            if (conf->last_mem_block_index == index) {
+                for (uint32_t prev_index = conf->last_mem_block_index; prev_index > 0; prev_index--) {
+                    if (conf->mem_blocks[prev_index].block != NULL) {
+                        conf->last_mem_block_index = prev_index;
+                        break;
+                    }
+                }
+            }
+
             block_freed = true;
 
             // Sets all allocations for the caller not permanent, since new free
@@ -104,17 +128,19 @@ void ns_dyn_mem_tracker_lib_free(ns_dyn_mem_tracker_lib_conf_t *conf, void *call
         }
     }
 
+    platform_exit_critical();
+
     if (!block_freed) {
-        tr_error("Free no block %s %" PRIi32, function, line);
+        return -1;
     }
 
-    platform_exit_critical();
+    return 0;
 }
 
 void ns_dyn_mem_tracker_lib_step(ns_dyn_mem_tracker_lib_conf_t *conf)
 {
     if (conf->mem_blocks_count != 0) {
-        for (uint32_t index = 0; index < conf->mem_blocks_count; index++) {
+        for (uint32_t index = 0; index <= conf->last_mem_block_index; index++) {
             if (conf->mem_blocks[index].block != NULL) {
                 conf->mem_blocks[index].lifetime++;
             }
@@ -122,14 +148,13 @@ void ns_dyn_mem_tracker_lib_step(ns_dyn_mem_tracker_lib_conf_t *conf)
     }
 }
 
-void ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf_t *conf)
+int8_t ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf_t *conf)
 {
     ns_dyn_mem_tracker_lib_mem_blocks_t *blocks = conf->mem_blocks;
     ns_dyn_mem_tracker_lib_allocators_t *top_allocators = conf->top_allocators;
     ns_dyn_mem_tracker_lib_allocators_t *permanent_allocators = conf->permanent_allocators;
     ns_dyn_mem_tracker_lib_allocators_t *to_permanent_allocators = conf->to_permanent_allocators;
 
-    uint16_t mem_blocks_count = conf->mem_blocks_count;
     uint16_t top_allocators_count = conf->top_allocators_count;
     uint16_t permanent_allocators_count = conf->permanent_allocators_count;
     uint16_t to_permanent_allocators_count = conf->to_permanent_allocators_count;
@@ -144,9 +169,13 @@ void ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf_t
     // Maximum to print of permanent entries
     uint8_t permanent_count = 0;
 
-    for (uint32_t index = 0; index < mem_blocks_count; index++) {
+    uint32_t list_allocated_memory = 0;
+
+    for (uint32_t index = 0; index <= conf->last_mem_block_index; index++) {
         if (blocks[index].block != NULL) {
             void *caller_addr = blocks[index].caller_addr;
+
+            list_allocated_memory += blocks[index].size;
 
             // Checks if caller address has already been counted
             bool next = false;
@@ -168,7 +197,7 @@ void ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf_t
             uint32_t min_lifetime = ~0;
             bool permanent_set_on_all = true;
             bool permanent_printed_set_on_all = true;
-            for (uint32_t search_index = 0; search_index < mem_blocks_count; search_index++) {
+            for (uint32_t search_index = 0; search_index <= conf->last_mem_block_index; search_index++) {
                 if (caller_addr == blocks[search_index].caller_addr) {
                     alloc_count++;
                     total_memory += blocks[search_index].size;
@@ -201,7 +230,7 @@ void ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf_t
                 continue;
             } else {
                 // Checks whether lifetime threshold has been reached, traces and skips
-                if (min_lifetime > 120 && to_permanent_count < to_permanent_allocators_count) {
+                if (min_lifetime > conf->to_permanent_steps_count && to_permanent_count < to_permanent_allocators_count) {
                     ns_dyn_mem_tracker_lib_permanent_value_set(conf, caller_addr, true);
 
                     to_permanent_allocators[to_permanent_count].caller_addr = caller_addr;
@@ -236,42 +265,27 @@ void ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf_t
         }
     }
 
+    if (conf->allocated_memory != list_allocated_memory) {
+        return -1;
+    }
+
     if (permanent_count < permanent_allocators_count) {
         ns_dyn_mem_tracker_lib_permanent_printed_value_set(conf, NULL, false);
     }
 
+    return 0;
 }
 
 void ns_dyn_mem_tracker_lib_max_snap_shot_update(ns_dyn_mem_tracker_lib_conf_t *conf)
 {
-    ns_dyn_mem_tracker_lib_allocators_t *max_snap_shot_allocators = conf->max_snap_shot_allocators;
-    if (max_snap_shot_allocators == NULL) {
-        return;
-    }
-
     ns_dyn_mem_tracker_lib_mem_blocks_t *blocks = conf->mem_blocks;
+    ns_dyn_mem_tracker_lib_allocators_t *max_snap_shot_allocators = conf->max_snap_shot_allocators;
 
-    uint16_t mem_blocks_count = conf->mem_blocks_count;
     uint16_t max_snap_shot_allocators_count = conf->max_snap_shot_allocators_count;
-
-    // Count used memory
-    uint32_t used_memory = 0;
-    for (uint32_t index = 0; index < mem_blocks_count; index++) {
-        if (blocks[index].block != NULL) {
-            used_memory += blocks[index].size;
-        }
-    }
-
-    // If uses memory more than previous snapshot, creates new snap shot
-    if (used_memory > conf->max_snap_shot_used_memory) {
-        conf->max_snap_shot_used_memory = used_memory;
-    } else {
-        return;
-    }
 
     memset(max_snap_shot_allocators, 0, max_snap_shot_allocators_count * sizeof(ns_dyn_mem_tracker_lib_allocators_t));
 
-    for (uint32_t index = 0; index < mem_blocks_count; index++) {
+    for (uint32_t index = 0; index <= conf->last_mem_block_index; index++) {
         if (blocks[index].block != NULL) {
             void *caller_addr = blocks[index].caller_addr;
 
@@ -293,23 +307,14 @@ void ns_dyn_mem_tracker_lib_max_snap_shot_update(ns_dyn_mem_tracker_lib_conf_t *
             uint32_t alloc_count = 0;
             uint32_t total_memory = 0;
             uint32_t min_lifetime = ~0;
-            bool permanent_set_on_all = true;
-            for (uint32_t search_index = 0; search_index < mem_blocks_count; search_index++) {
+            for (uint32_t search_index = 0; search_index <= conf->last_mem_block_index; search_index++) {
                 if (caller_addr == blocks[search_index].caller_addr) {
                     alloc_count++;
                     total_memory += blocks[search_index].size;
                     if (blocks[search_index].lifetime < min_lifetime) {
                         min_lifetime = blocks[search_index].lifetime;
                     }
-                    if (!blocks[search_index].permanent) {
-                        permanent_set_on_all = false;
-                    }
                 }
-            }
-
-            // Checks whether all reference are marked permanent
-            if (permanent_set_on_all) {
-                //continue;
             }
 
             // Add to list if allocation count is larger than entry on the list
@@ -337,7 +342,7 @@ static void ns_dyn_mem_tracker_lib_permanent_value_set(ns_dyn_mem_tracker_lib_co
 {
     /* Search for all the references to the caller address from the allocation info and
        set block permanent value */
-    for (uint16_t search_index = 0; search_index < conf->mem_blocks_count; search_index++) {
+    for (uint16_t search_index = 0; search_index <= conf->last_mem_block_index; search_index++) {
         if (conf->mem_blocks[search_index].caller_addr == caller_addr) {
             conf->mem_blocks[search_index].permanent = new_value;
         }
@@ -348,7 +353,7 @@ static void ns_dyn_mem_tracker_lib_permanent_printed_value_set(ns_dyn_mem_tracke
 {
     /* Search for all the references to the caller address from the allocation info and
        set block permanent value */
-    for (uint16_t search_index = 0; search_index < conf->mem_blocks_count; search_index++) {
+    for (uint16_t search_index = 0; search_index <= conf->last_mem_block_index; search_index++) {
         if (caller_addr == NULL || conf->mem_blocks[search_index].caller_addr == caller_addr) {
             conf->mem_blocks[search_index].permanent_printed = new_value;
         }

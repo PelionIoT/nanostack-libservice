@@ -33,7 +33,7 @@ typedef struct ns_dyn_mem_tracker_lib_mem_blocks_s {
     void *block;                   /**< Allocated memory block */
     void *caller_addr;             /**< Caller address */
     uint32_t size;                 /**< Allocation size */
-    uint32_t lifetime;             /**< Memory block lifetime in seconds */
+    uint32_t lifetime;             /**< Memory block lifetime in steps (e.g. seconds) */
     const char *function;          /**< Caller function */
     uint16_t line;                 /**< Caller line in module */
     bool permanent : 1;            /**< Permanent memory block */
@@ -59,18 +59,20 @@ typedef struct ns_dyn_mem_tracker_lib_conf_s {
     ns_dyn_mem_tracker_lib_allocators_t *to_permanent_allocators;   /**< To permanent allocators */
     ns_dyn_mem_tracker_lib_allocators_t *max_snap_shot_allocators;  /**< Snap shot of maximum memory used by allocators */
     ns_dyn_mem_tracker_lib_alloc_mem_blocks *alloc_mem_blocks;      /**< Memory block array allocator / array size increase allocator */
-    uint32_t max_snap_shot_used_memory;                             /**< Snap shot used memory */
+    uint32_t allocated_memory;                                      /**< Currently allocated memory */
     uint16_t mem_blocks_count;                                      /**< Number of entries in memory blocks array */
+    uint16_t last_mem_block_index;                                  /**< Last memory block in memory blocks array */
     uint16_t top_allocators_count;                                  /**< Top allocators array count */
     uint16_t permanent_allocators_count;                            /**< Permanent allocators array count */
     uint16_t to_permanent_allocators_count;                         /**< To permanent allocators array count */
     uint16_t max_snap_shot_allocators_count;                        /**< Snap shot of maximum memory used by allocators array count */
+    uint16_t to_permanent_steps_count;                              /**< How many steps before moving block to permanent allocators list */
 } ns_dyn_mem_tracker_lib_conf_t;
 
-void ns_dyn_mem_tracker_lib_alloc(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, const char *function, uint32_t line, void *block, uint32_t alloc_size);
-void ns_dyn_mem_tracker_lib_free(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, const char *function, uint32_t line, void *block);
+int8_t ns_dyn_mem_tracker_lib_alloc(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, const char *function, uint32_t line, void *block, uint32_t alloc_size);
+int8_t ns_dyn_mem_tracker_lib_free(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, const char *function, uint32_t line, void *block);
 void ns_dyn_mem_tracker_lib_step(ns_dyn_mem_tracker_lib_conf_t *conf);
-void ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf_t *conf);
+int8_t ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf_t *conf);
 void ns_dyn_mem_tracker_lib_max_snap_shot_update(ns_dyn_mem_tracker_lib_conf_t *conf);
 
 #endif
