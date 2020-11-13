@@ -3,7 +3,7 @@
     "macros": ["NSDYNMEM_TRACKER_ENABLED=MBED_CONF_NANOSTACK_LIBSERVICE_NSDYNMEM_TRACKER_ENABLED"],
     "config": {
         "present": 1,
-        "nsdynmem_tracker_enabled": {
+        "nsdynmem-tracker-enabled": {
             "help": "Use to enable dynamic memory tracker",
             "value": 0
         }
