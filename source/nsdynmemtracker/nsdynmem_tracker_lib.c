@@ -65,10 +65,14 @@ int8_t ns_dyn_mem_tracker_lib_alloc(ns_dyn_mem_tracker_lib_conf_t *conf, void *c
         }
         if (ns_dyn_mem_tracker_lib_ext_find_free_index(conf, start_index, &free_index) < 0) {
             conf->ext_mem_blocks = conf->ext_alloc_mem_blocks(conf->ext_mem_blocks, &conf->ext_mem_blocks_count);
+            if (conf->ext_mem_blocks == NULL) {
+                platform_exit_critical();
+                return -1;
+            }
             if (conf->block_index_hash != NULL) {
                 start_index = conf->block_index_hash(block, conf->ext_mem_blocks_count);
             }
-            if (conf->ext_mem_blocks == NULL || (ns_dyn_mem_tracker_lib_ext_find_free_index(conf, start_index, &free_index) < 0)) {
+            if (ns_dyn_mem_tracker_lib_ext_find_free_index(conf, start_index, &free_index) < 0) {
                 platform_exit_critical();
                 return -1;
             }
@@ -165,6 +169,7 @@ int8_t ns_dyn_mem_tracker_lib_free(ns_dyn_mem_tracker_lib_conf_t *conf, void *ca
     }
 
     if (conf->ext_mem_blocks == NULL) {
+        platform_exit_critical();
         return -1;
     }
 
@@ -218,6 +223,8 @@ int8_t ns_dyn_mem_tracker_lib_free(ns_dyn_mem_tracker_lib_conf_t *conf, void *ca
 
 void ns_dyn_mem_tracker_lib_step(ns_dyn_mem_tracker_lib_conf_t *conf)
 {
+    platform_enter_critical();
+
     if (conf->mem_blocks_count != 0) {
         for (uint32_t index = 0; index <= conf->last_mem_block_index; index++) {
             if (conf->mem_blocks[index].block != NULL) {
@@ -225,10 +232,14 @@ void ns_dyn_mem_tracker_lib_step(ns_dyn_mem_tracker_lib_conf_t *conf)
             }
         }
     }
+
+    platform_exit_critical();
 }
 
 int8_t ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf_t *conf)
 {
+    platform_enter_critical();
+
     ns_dyn_mem_tracker_lib_mem_blocks_t *blocks = conf->mem_blocks;
     ns_dyn_mem_tracker_lib_allocators_t *top_allocators = conf->top_allocators;
     ns_dyn_mem_tracker_lib_allocators_t *permanent_allocators = conf->permanent_allocators;
@@ -320,11 +331,15 @@ int8_t ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf
         ns_dyn_mem_tracker_lib_permanent_printed_value_set(conf, NULL, false);
     }
 
+    platform_exit_critical();
+
     return 0;
 }
 
 void ns_dyn_mem_tracker_lib_max_snap_shot_update(ns_dyn_mem_tracker_lib_conf_t *conf)
 {
+    platform_enter_critical();
+
     ns_dyn_mem_tracker_lib_mem_blocks_t *blocks = conf->mem_blocks;
     ns_dyn_mem_tracker_lib_allocators_t *max_snap_shot_allocators = conf->max_snap_shot_allocators;
 
@@ -368,6 +383,8 @@ void ns_dyn_mem_tracker_lib_max_snap_shot_update(ns_dyn_mem_tracker_lib_conf_t *
             }
         }
     }
+
+    platform_exit_critical();
 }
 
 static void ns_dyn_mem_tracker_lib_permanent_printed_value_set(ns_dyn_mem_tracker_lib_conf_t *conf, void *caller_addr, bool new_value)
