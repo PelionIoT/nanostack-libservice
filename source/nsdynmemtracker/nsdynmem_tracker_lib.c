@@ -248,13 +248,9 @@ int8_t ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf
     // Maximum to print of permanent entries
     uint8_t permanent_count = 0;
 
-    uint32_t list_allocated_memory = 0;
-
     for (uint32_t index = 0; index <= conf->last_mem_block_index; index++) {
         if (blocks[index].block != NULL) {
             void *caller_addr = blocks[index].caller_addr;
-
-            list_allocated_memory += blocks[index].total_size;
 
             // Checks if caller address has already been counted
             bool next = false;
@@ -318,10 +314,6 @@ int8_t ns_dyn_mem_tracker_lib_allocator_lists_update(ns_dyn_mem_tracker_lib_conf
                 }
             }
         }
-    }
-
-    if (conf->allocated_memory != list_allocated_memory) {
-        return -1;
     }
 
     if (permanent_count < permanent_allocators_count) {
