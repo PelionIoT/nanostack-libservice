@@ -34,6 +34,8 @@ set(LS_SOURCES
 add_library(nanostack-libservice
     ${LS_SOURCES})
 
+# some other projects include libservice stuff with path
+target_include_directories(nanostack-libservice PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(nanostack-libservice PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
 target_include_directories(nanostack-libservice PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
 
