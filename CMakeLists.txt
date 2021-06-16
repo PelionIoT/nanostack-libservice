@@ -7,10 +7,6 @@ project(nanostack-libservice)
 
 option(enable_coverage_data "Enable Coverage data" OFF)
 
-# GoogleTest requires at least C++11
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -108,8 +104,11 @@ target_link_libraries(
     gtest_main
 )
 
-
-
+# GTest framework requires C++ version 11
+set_target_properties(dynmem_test ip6tos_test stoip6_test nsnvmhelper_test
+PROPERTIES
+    CXX_STANDARD 11
+)
 
 include(GoogleTest)
 gtest_discover_tests(ip6tos_test)
