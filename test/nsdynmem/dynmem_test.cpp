@@ -234,7 +234,7 @@ TEST_F(dynmem_test, heap_add_region_randomized)
 
     srand(time(NULL));
     int block_size;
-    int i;
+    uint32_t i;
     for (i = 0; i < size * NS_MEM_REGION_CNT; i++) {
         // allocate huge amount of small blocks until allocation fails
         block_size = (rand() % 4) + 1;
@@ -417,7 +417,6 @@ TEST_F(dynmem_test, test_both_allocs_with_hole_usage)
 {
     uint16_t size = NS_MEM_BOOK_SIZE_WITH_HOLE + 15 + 5;
     mem_stat_t info;
-    void *p[size];
     uint8_t *heap = (uint8_t *)malloc(size);
     ASSERT_TRUE(heap);
     reset_heap_error();
@@ -447,7 +446,6 @@ TEST_F(dynmem_test, test_temp_alloc_with_skipping_hole)
 {
     uint16_t size = 1000;
     mem_stat_t info;
-    void *p[size];
     uint8_t *heap = (uint8_t *)malloc(size);
     ASSERT_TRUE(heap);
     reset_heap_error();
@@ -473,7 +471,6 @@ TEST_F(dynmem_test, zero_allocate)
     uint16_t size = 1000;
     mem_stat_t info;
     uint8_t *heap = (uint8_t *)malloc(size);
-    uint8_t *ptr = heap;
     ASSERT_TRUE(heap);
     reset_heap_error();
     ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
@@ -489,7 +486,6 @@ TEST_F(dynmem_test, too_big)
     uint16_t size = 1000;
     mem_stat_t info;
     uint8_t *heap = (uint8_t *)malloc(size);
-    uint8_t *ptr = heap;
     ASSERT_TRUE(heap);
     reset_heap_error();
     ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
@@ -505,7 +501,6 @@ TEST_F(dynmem_test, corrupted_memory)
     uint16_t size = 1000;
     mem_stat_t info;
     uint8_t *heap = (uint8_t *)malloc(size);
-    uint8_t *ptr = heap;
     ASSERT_TRUE(heap);
     reset_heap_error();
     ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
@@ -524,7 +519,6 @@ TEST_F(dynmem_test, no_big_enough_sector)
     uint16_t size = NS_MEM_BOOK_SIZE_WITH_HOLE + (5 * 8);
     mem_stat_t info;
     uint8_t *heap = (uint8_t *)malloc(size);
-    uint8_t *ptr = heap;
     ASSERT_TRUE(heap);
     reset_heap_error();
     ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
@@ -552,7 +546,7 @@ TEST_F(dynmem_test, diff_sizes)
     reset_heap_error();
     ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
     ASSERT_EQ(false, heap_have_failed());
-    int i;
+    uint32_t i;
     for (i = 1; i < (size - NS_MEM_BOOK_SIZE_WITH_HOLE); i++) {
         p = ns_dyn_mem_temporary_alloc(i);
         ASSERT_TRUE(p);
@@ -653,7 +647,6 @@ TEST_F(dynmem_test, free_on_empty_heap)
     uint16_t size = 1000;
     mem_stat_t info;
     uint8_t *heap = (uint8_t *)malloc(size);
-    uint8_t *p;
     ASSERT_TRUE(heap);
     reset_heap_error();
     ns_dyn_mem_init(heap, size, &heap_fail_callback, &info);
@@ -713,7 +706,6 @@ TEST_F(dynmem_test, test_merge_corrupted_previous_block)
 {
     uint16_t size = 1000;
     uint8_t *heap = (uint8_t *)malloc(size);
-    uint8_t *p;
     ASSERT_TRUE(heap);
     reset_heap_error();
     ns_dyn_mem_init(heap, size, &heap_fail_callback, NULL);
@@ -735,7 +727,6 @@ TEST_F(dynmem_test, test_free_corrupted_next_block)
 {
     uint16_t size = 1000;
     uint8_t *heap = (uint8_t *)malloc(size);
-    uint8_t *p;
     ASSERT_TRUE(heap);
     reset_heap_error();
     ns_dyn_mem_init(heap, size, &heap_fail_callback, NULL);
