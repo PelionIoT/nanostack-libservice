@@ -7,15 +7,7 @@ project(nanostack-libservice)
 
 option(enable_coverage_data "Enable Coverage data" OFF)
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.10.x.zip
-)
-
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+include(repositories.cmake)
 
 set(LS_SOURCES
     source/IPv6_fcf_lib/ip_fsc.c
@@ -31,9 +23,9 @@ add_library(nanostack-libservice
     ${LS_SOURCES})
 
 # some other projects include libservice stuff with path
-target_include_directories(nanostack-libservice PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(nanostack-libservice PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
-target_include_directories(nanostack-libservice PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
+target_include_directories(nanostack-libservice PUBLIC ${nanostack-libservice_SOURCE_DIR})
+target_include_directories(nanostack-libservice PUBLIC ${nanostack-libservice_SOURCE_DIR}/mbed-client-libservice)
+target_include_directories(nanostack-libservice PUBLIC ${nanostack-libservice_SOURCE_DIR}/mbed-client-libservice/platform)
 
 # Tests after this line
 enable_testing()
