@@ -20,7 +20,7 @@
 #include <stdint.h>
 
 struct ip6_addresses_and_its_binary_form_t {
-    char *addr;
+    const char *addr;
     uint8_t bin[16];
 } ipv6_test_values[] = {
     { "2001:db8::1:0:0:1",                      { 0x20, 0x01, 0xd, 0xb8, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1 }},

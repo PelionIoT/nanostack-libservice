@@ -14,75 +14,83 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "CppUTest/TestHarness.h"
+#include "gtest/gtest.h"
 #include "ip6string.h"
 #include "ipv6_test_values.h"
 #include <stdlib.h>
 #include <string.h>
 
-TEST_GROUP(stoip6)
+class stoip6_test : public testing::Test
+
 {
-    void setup() {
+protected:
+    void SetUp(void)
+    {
+        memset(buf, 0, 40);
     }
 
-    void teardown() {
+    void TearDown(void)
+    {
+        i++;
     }
+    char buf[40];
+    int i = 0;
 };
 
-TEST(stoip6, ZeroAddress)
+TEST_F(stoip6_test, ZeroAddress)
 {
     for (int i = 0; ipv6_test_values[i].addr; i++) {
         uint8_t ip[16];
-        char *addr = ipv6_test_values[i].addr;
+        const char *addr = ipv6_test_values[i].addr;
         stoip6(addr, strlen(addr), ip);
-        CHECK(0 == memcmp(ip, ipv6_test_values[i].bin, 16));
+        ASSERT_EQ(0, memcmp(ip, ipv6_test_values[i].bin, 16));
     }
 }
 
-TEST(stoip6, TooShort)
+TEST_F(stoip6_test, TooShort)
 {
-    char *addr = "FFFF:FFFF:";
+    const char *addr = "FFFF:FFFF:";
     uint8_t ip[16];
     uint8_t correct[16] = {0};
     // This should stop parsing when too short address given.
     // Despite partial parsing, the entire buffer should be filled with zeroes
-    CHECK(false == stoip6(addr, strlen(addr), ip));
-    CHECK(0 == memcmp(ip, correct, 16));
+    ASSERT_EQ(false, stoip6(addr, strlen(addr), ip));
+    ASSERT_EQ(0, memcmp(ip, correct, 16));
 }
 
-TEST(stoip6, TooLongString)
+TEST_F(stoip6_test, TooLongString)
 {
     // String len must be less than 40, otherwise not valid
-    char *addr = "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:";
+    const char *addr = "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:";
     uint8_t ip[16] = {0};
     uint8_t correct[16] = {0};
     // This should not fill anything, too long string.
     // This is basically only validation we do
-    CHECK(false == stoip6(addr, strlen(addr), ip));
-    CHECK(0 == memcmp(ip, correct, 16));
+    ASSERT_EQ(false, stoip6(addr, strlen(addr), ip));
+    ASSERT_EQ(0, memcmp(ip, correct, 16));
 }
 
-TEST(stoip6, TooManyFields)
+TEST_F(stoip6_test, TooManyFields)
 {
     // String len must be less than 40
-    char *addr = "FF:FF:FF:FF:FF:FF:FFFF:FFFF:FFFF:FFFF:";
+    const char *addr = "FF:FF:FF:FF:FF:FF:FFFF:FFFF:FFFF:FFFF:";
     uint8_t ip[16] = {0};
     uint8_t correct[16] = {0};
 
-    CHECK(false == stoip6(addr, strlen(addr), ip));
-    CHECK(0 == memcmp(ip, correct, 16));
+    ASSERT_EQ(false, stoip6(addr, strlen(addr), ip));
+    ASSERT_EQ(0, memcmp(ip, correct, 16));
 }
 
-TEST(stoip6, Prefixlen)
+TEST_F(stoip6_test, Prefixlen)
 {
-    CHECK(0 == sipv6_prefixlength("::"));
-    CHECK(64 == sipv6_prefixlength("::/64"));
+    ASSERT_EQ(0, sipv6_prefixlength("::"));
+    ASSERT_EQ(64, sipv6_prefixlength("::/64"));
 }
 
 // This test revealed a off-by-one error in stoip6() when the code was ran under valgrind.
 // The IP address is copied from the test_2duts_ping -test, where the valgrind message
 // was originally spotted.
-TEST(stoip6, RegressionTestForOffByOne)
+TEST_F(stoip6_test, RegressionTestForOffByOne)
 {
     const char *sourceAddr = "fd00:db8::643f:f54a:ec29:cdbb";
 
@@ -95,14 +103,14 @@ TEST(stoip6, RegressionTestForOffByOne)
                                   0x64, 0x3f, 0xf5, 0x4a, 0xec, 0x29, 0xcd, 0xbb
                                 };
 
-    CHECK(true == stoip6(sourceTemp, sourceTempLen, ip));
-    CHECK(0 == memcmp(ip, correct, 16));
+    ASSERT_EQ(true, stoip6(sourceTemp, sourceTempLen, ip));
+    ASSERT_EQ(0, memcmp(ip, correct, 16));
 
     free(sourceTemp);
 }
 
 // Test various illegal formats to ensure proper rejection
-TEST(stoip6, InvalidAddresses)
+TEST_F(stoip6_test, InvalidAddresses)
 {
     uint8_t ip[16];
     uint8_t correct[16] = {0};
@@ -114,8 +122,8 @@ TEST(stoip6, InvalidAddresses)
     };
 
     for (uint8_t i = 0; i < 3; ++i) {
-        CHECK(false == stoip6(invalidArray[i], strlen(invalidArray[i]), ip));
-        CHECK(0 == memcmp(ip, correct, 16));
+        ASSERT_EQ(false, stoip6(invalidArray[i], strlen(invalidArray[i]), ip));
+        ASSERT_EQ(0, memcmp(ip, correct, 16));
     }
 }
 
@@ -153,84 +161,70 @@ const uint8_t hex_addr[][16] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
-char buf[40];
-int i = 0;
-
-TEST_GROUP(stoip6_2)
-{
-    void setUp(void) {
-        memset(buf, 0, 40);
-    }
-
-    void tearDown(void) {
-        i++;
-    }
-};
-
 /* Unity test code starts */
 
 
-TEST(stoip6_2, test_2_1)
+TEST_F(stoip6_test, test_2_1)
 {
     i = 0;
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, strlen(buf)));
 }
 
-TEST(stoip6_2, test_2_2)
+TEST_F(stoip6_test, test_2_2)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, strlen(buf)));
 }
-TEST(stoip6_2, test_2_3)
+TEST_F(stoip6_test, test_2_3)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, strlen(buf)));
 }
-TEST(stoip6_2, test_2_4)
+TEST_F(stoip6_test, test_2_4)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, strlen(buf)));
 }
-TEST(stoip6_2, test_2_5)
+TEST_F(stoip6_test, test_2_5)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, strlen(buf)));
 }
-TEST(stoip6_2, test_2_6)
+TEST_F(stoip6_test, test_2_6)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, strlen(buf)));
 }
-TEST(stoip6_2, test_2_7)
+TEST_F(stoip6_test, test_2_7)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, strlen(buf)));
 }
-TEST(stoip6_2, test_2_8)
+TEST_F(stoip6_test, test_2_8)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, strlen(buf)));
 }
-TEST(stoip6_2, test_2_9)
+TEST_F(stoip6_test, test_2_9)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, strlen(buf)));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, strlen(buf)));
 }
-TEST(stoip6_2, test_2_10)
+TEST_F(stoip6_test, test_2_10)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, 16));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, 16));
 }
-TEST(stoip6_2, test_2_11)
+TEST_F(stoip6_test, test_2_11)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, 16));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, 16));
 }
-TEST(stoip6_2, test_2_12)
+TEST_F(stoip6_test, test_2_12)
 {
-    CHECK(true == stoip6(string_addr[i], strlen(string_addr[i]), buf));
-    CHECK(0 == memcmp(hex_addr[i], buf, 16));
+    ASSERT_EQ(true, stoip6(string_addr[i], strlen(string_addr[i]), buf));
+    ASSERT_EQ(0, memcmp(hex_addr[i], buf, 16));
 }
 
 /***********************************************************/
@@ -264,16 +258,7 @@ const uint8_t hex_prefix_addr[][16] = {
 const int_fast16_t prefix_len_tbl[] = {64, 60, 48, 0, 99, 0, -1, -1, -1};
 const int prefix_status_tbl[] = {0, 0, 0, 0, 0, 0, 0, -1, -1};
 
-TEST_GROUP(stoip6_3)
-{
-    void setup() {
-    }
-
-    void teardown() {
-    }
-};
-
-TEST(stoip6_3, stoip6_prefix_test)
+TEST_F(stoip6_test, stoip6_prefix_test)
 {
     for (int i = 0; i < 9; i++) {
         uint8_t ip[16];
@@ -282,10 +267,10 @@ TEST(stoip6_3, stoip6_prefix_test)
         const char *addr = &string_prefix_addr[i][0];
 
         result = stoip6_prefix(addr, ip, &prefix_len);
-        CHECK(result == prefix_status_tbl[i]);
+        ASSERT_EQ(result, prefix_status_tbl[i]);
         if (result == 0) {
-            CHECK(0 == memcmp(ip, &hex_prefix_addr[i][0], 16));
-            CHECK(prefix_len == prefix_len_tbl[i])
+            ASSERT_EQ(0, memcmp(ip, &hex_prefix_addr[i][0], 16));
+            ASSERT_EQ(prefix_len, prefix_len_tbl[i]);
         }
     }
 }

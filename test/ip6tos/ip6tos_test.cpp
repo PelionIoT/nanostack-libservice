@@ -14,52 +14,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "CppUTest/TestHarness.h"
+#include "gtest/gtest.h"
 #include "ip6string.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 
-TEST_GROUP(ip6tos)
-{
-    void setup() {
+
+class ip6tos_test : public testing::Test {
+protected:
+    void SetUp(void)
+    {
+        memset(buf, 0, 40);
     }
 
-    void teardown() {
+    void TearDown(void)
+    {
+        i++;
     }
+
+    char buf[40];
+    int i = 0;
 };
 
-TEST(ip6tos, ip6_prefix_tos_func)
+TEST_F(ip6tos_test, ip6_prefix_tos_func)
 {
     char prefix_str[45] = {0};
     char str_len = 0;
-    char *expected;
+    const char *expected;
 
     uint8_t prefix[] = { 0x14, 0x6e, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00 };
     int prefix_len = 64;
     expected = "146e:a00::/64";
     str_len = ip6_prefix_tos(prefix, prefix_len, prefix_str);
-    CHECK(str_len == 13);
-    STRCMP_EQUAL(expected, prefix_str);
+    ASSERT_EQ(str_len, 13);
+    ASSERT_STREQ(expected, prefix_str);
 
     memset(prefix_str, 0, 45);
     str_len = 0;
     expected = "::/0";
     str_len = ip6_prefix_tos(NULL, 0, prefix_str);
-    CHECK(str_len == 4);
-    STRCMP_EQUAL(expected, prefix_str);
+    ASSERT_EQ(str_len, 4);
+    ASSERT_STREQ(expected, prefix_str);
 
     str_len = 0;
     uint8_t prefix_2[16];
     memset(prefix_2, 0x88, 16);
     expected = "8888:8888:8888:8888:8888:8888:8888:8888/128";
     str_len = ip6_prefix_tos(prefix_2, 128, prefix_str);
-    CHECK(str_len == 43);
-    STRCMP_EQUAL(expected, prefix_str);
+    ASSERT_EQ(str_len, 43);
+    ASSERT_STREQ(expected, prefix_str);
 
     memset(prefix_str, 0, 45);
     str_len = ip6_prefix_tos(prefix, 130, prefix_str);
-    CHECK(str_len == 0);
+    ASSERT_EQ(str_len, 0);
 }
 
 /***********************************************************/
@@ -96,78 +104,65 @@ const uint8_t hex_addr[][16] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
-char buf[40];
-int i = 0;
 
-TEST_GROUP(ip6tos_2)
+TEST_F(ip6tos_test, test_1)
 {
-    void setUp(void) {
-        memset(buf, 0, 40);
-    }
-
-    void tearDown(void) {
-        i++;
-    }
-};
-
-TEST(ip6tos_2, test_1)
-{
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
 
-TEST(ip6tos_2, test_2)
+TEST_F(ip6tos_test, test_2)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_3)
+TEST_F(ip6tos_test, test_3)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_4)
+TEST_F(ip6tos_test, test_4)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_5)
+TEST_F(ip6tos_test, test_5)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_6)
+TEST_F(ip6tos_test, test_6)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_7)
+TEST_F(ip6tos_test, test_7)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_8)
+TEST_F(ip6tos_test, test_8)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_9)
+TEST_F(ip6tos_test, test_9)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_10)
+TEST_F(ip6tos_test, test_10)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_11)
+TEST_F(ip6tos_test, test_11)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }
-TEST(ip6tos_2, test_12)
+TEST_F(ip6tos_test, test_12)
 {
-    CHECK(strlen(string_addr[i]) == ip6tos(hex_addr[i], buf));
-    STRCMP_EQUAL(string_addr[i], buf);
+    ASSERT_EQ(strlen(string_addr[i]), ip6tos(hex_addr[i], buf));
+    ASSERT_STREQ(string_addr[i], buf);
 }

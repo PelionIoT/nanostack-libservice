@@ -16,6 +16,7 @@
  */
 
 #include <inttypes.h>
+#include <stddef.h>
 #include "test_ns_nvm_helper.h"
 #include "ns_nvm_helper.h"
 #include "nsdynmemLIB_stub.h"
@@ -36,6 +37,8 @@ static int write_callback_status = 0;
 static void *write_callback_context = NULL;
 static int delete_callback_status = 0;
 static void *delete_callback_context = NULL;
+
+extern void test_platform_nvm_api_callback();
 
 extern void test_platform_nvm_api_set_retval(platform_nvm_status return_value);
 
@@ -66,28 +69,28 @@ bool test_ns_nvm_helper_write()
 
     // test with invalid parameters - callback NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_data_write(NULL, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(NULL, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
 
     // test with invalid parameters - key NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, NULL, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, NULL, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
 
     // test with invalid parameters - buf NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, NULL, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, NULL, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
 
     // test with invalid parameters - buf_len NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, &buf, NULL, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, buf, NULL, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
@@ -95,7 +98,7 @@ bool test_ns_nvm_helper_write()
     // test with valid parameters - memory allocation fails 1
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 0;
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_MEMORY) {
         return false;
     }
@@ -103,7 +106,7 @@ bool test_ns_nvm_helper_write()
     // test with valid parameters - memory allocation fails 2
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 1;
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_MEMORY) {
         return false;
     }
@@ -111,7 +114,7 @@ bool test_ns_nvm_helper_write()
     // test with valid parameters - platform_init fails
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
     nsdynmemlib_stub.returnCounter = 2;
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_ERROR) {
         return false;
     }
@@ -119,7 +122,7 @@ bool test_ns_nvm_helper_write()
     // test with valid parameters - OK
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 2;
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
@@ -136,7 +139,7 @@ bool test_ns_nvm_helper_write()
     // make flush callback
     test_platform_nvm_api_callback();
 
-    if (write_callback_status != NS_NVM_OK || write_callback_context != TEST_NS_NVM_HELPER_CONTEXT1) {
+    if (write_callback_status != NS_NVM_OK || write_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT1) {
         return false;
     }
 
@@ -152,28 +155,28 @@ bool test_ns_nvm_helper_read()
 
     // test with invalid parameters - callback NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_data_read(NULL, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT2);
+    ret_val = ns_nvm_data_read(NULL, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT2);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
 
     // test with invalid parameters - key NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, NULL, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT2);
+    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, NULL, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT2);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
 
     // test with invalid parameters - buf NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, NULL, &buf_len, TEST_NS_NVM_HELPER_CONTEXT2);
+    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, NULL, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT2);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
 
     // test with invalid parameters - buf_len NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, &buf, NULL, TEST_NS_NVM_HELPER_CONTEXT2);
+    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, buf, NULL, (void *)TEST_NS_NVM_HELPER_CONTEXT2);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
@@ -181,7 +184,7 @@ bool test_ns_nvm_helper_read()
     // test with valid parameters - memory allocation fails 1
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 0;
-    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT2);
+    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT2);
     if (ret_val != NS_NVM_MEMORY) {
         return false;
     }
@@ -189,7 +192,7 @@ bool test_ns_nvm_helper_read()
     // test with valid parameters - read ok
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 1;
-    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT2);
+    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT2);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
@@ -197,7 +200,7 @@ bool test_ns_nvm_helper_read()
     // make read callback
     test_platform_nvm_api_callback();
 
-    if (read_callback_status != NS_NVM_OK || read_callback_context != TEST_NS_NVM_HELPER_CONTEXT2) {
+    if (read_callback_status != NS_NVM_OK || read_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT2) {
         return false;
     }
 
@@ -213,14 +216,14 @@ bool test_ns_nvm_helper_delete()
 
     // test with invalid parameters - callback NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_key_delete(NULL, key1, TEST_NS_NVM_HELPER_CONTEXT3);
+    ret_val = ns_nvm_key_delete(NULL, key1, (void *)TEST_NS_NVM_HELPER_CONTEXT3);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
 
     // test with invalid parameters - key NULL
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
-    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, NULL, TEST_NS_NVM_HELPER_CONTEXT3);
+    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, NULL, (void *)TEST_NS_NVM_HELPER_CONTEXT3);
     if (ret_val == NS_NVM_OK) {
         return false;
     }
@@ -228,7 +231,7 @@ bool test_ns_nvm_helper_delete()
     // test with valid parameters - memory allocation fails
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
     nsdynmemlib_stub.returnCounter = 0;
-    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, key1, TEST_NS_NVM_HELPER_CONTEXT3);
+    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, key1, (void *)TEST_NS_NVM_HELPER_CONTEXT3);
     if (ret_val != NS_NVM_MEMORY) {
         return false;
     }
@@ -236,7 +239,7 @@ bool test_ns_nvm_helper_delete()
     // test with valid parameters - OK
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 1;
-    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, key1, TEST_NS_NVM_HELPER_CONTEXT3);
+    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, key1, (void *)TEST_NS_NVM_HELPER_CONTEXT3);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
@@ -247,7 +250,7 @@ bool test_ns_nvm_helper_delete()
     // make flush callback
     test_platform_nvm_api_callback();
 
-    if (delete_callback_status != NS_NVM_OK || delete_callback_context != TEST_NS_NVM_HELPER_CONTEXT3) {
+    if (delete_callback_status != NS_NVM_OK || delete_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT3) {
         return false;
     }
 
@@ -268,7 +271,7 @@ bool test_ns_nvm_helper_concurrent_requests()
     // read ok
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 1;
-    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
@@ -276,14 +279,14 @@ bool test_ns_nvm_helper_concurrent_requests()
     // write ok
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 2;
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT2);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT2);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
 
     // delete ok
     nsdynmemlib_stub.returnCounter = 1;
-    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, key1, TEST_NS_NVM_HELPER_CONTEXT3);
+    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, key1, (void *)TEST_NS_NVM_HELPER_CONTEXT3);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
@@ -291,7 +294,7 @@ bool test_ns_nvm_helper_concurrent_requests()
     // Read - should complete first, make callback
     test_platform_nvm_api_callback();
 
-    if (read_callback_status != NS_NVM_OK || read_callback_context != TEST_NS_NVM_HELPER_CONTEXT1) {
+    if (read_callback_status != NS_NVM_OK || read_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT1) {
         return false;
     }
 
@@ -305,12 +308,12 @@ bool test_ns_nvm_helper_concurrent_requests()
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
     test_platform_nvm_api_callback();
 
-    if (write_callback_status != NS_NVM_ERROR || write_callback_context != TEST_NS_NVM_HELPER_CONTEXT2) {
+    if (write_callback_status != NS_NVM_ERROR || write_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT2) {
         return false;
     }
 
     // delete callback is called after write because write was failing
-    if (delete_callback_status != NS_NVM_ERROR || delete_callback_context != TEST_NS_NVM_HELPER_CONTEXT3) {
+    if (delete_callback_status != NS_NVM_ERROR || delete_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT3) {
         return false;
     }
 
@@ -331,7 +334,7 @@ bool test_ns_nvm_helper_platform_error()
     // read request fails directly in platform_nvm_api
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
     nsdynmemlib_stub.returnCounter = 1;
-    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_ERROR) {
         return false;
     }
@@ -339,21 +342,21 @@ bool test_ns_nvm_helper_platform_error()
     // read request fails in platform_nvm_api callback
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 1;
-    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_read(test_ns_nvm_helper_read_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
     // make read callback
     test_platform_nvm_api_set_retval(PLATFORM_NVM_KEY_NOT_FOUND);
     test_platform_nvm_api_callback();
-    if (read_callback_status != NS_NVM_DATA_NOT_FOUND || read_callback_context != TEST_NS_NVM_HELPER_CONTEXT1) {
+    if (read_callback_status != NS_NVM_DATA_NOT_FOUND || read_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT1) {
         return false;
     }
 
     // delete fails in platform api callback
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 1;
-    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, key1, TEST_NS_NVM_HELPER_CONTEXT3);
+    ret_val = ns_nvm_key_delete(test_ns_nvm_helper_delete_callback, key1, (void *)TEST_NS_NVM_HELPER_CONTEXT3);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
@@ -361,7 +364,7 @@ bool test_ns_nvm_helper_platform_error()
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
     // make delete callback
     test_platform_nvm_api_callback();
-    if (delete_callback_status != NS_NVM_ERROR || delete_callback_context != TEST_NS_NVM_HELPER_CONTEXT3) {
+    if (delete_callback_status != NS_NVM_ERROR || delete_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT3) {
         return false;
     }
 
@@ -379,14 +382,14 @@ bool test_ns_nvm_helper_platform_error_in_write()
     // create callback fails
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 2;
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
 
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
     test_platform_nvm_api_callback();
-    if (write_callback_status != NS_NVM_ERROR || write_callback_context != TEST_NS_NVM_HELPER_CONTEXT1) {
+    if (write_callback_status != NS_NVM_ERROR || write_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT1) {
         return false;
     }
 
@@ -396,7 +399,7 @@ bool test_ns_nvm_helper_platform_error_in_write()
     // write calback fails
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 2;
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
@@ -407,7 +410,7 @@ bool test_ns_nvm_helper_platform_error_in_write()
     // make write callback with error
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
     test_platform_nvm_api_callback();
-    if (write_callback_status != NS_NVM_ERROR || write_callback_context != TEST_NS_NVM_HELPER_CONTEXT1) {
+    if (write_callback_status != NS_NVM_ERROR || write_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT1) {
         return false;
     }
 
@@ -417,7 +420,7 @@ bool test_ns_nvm_helper_platform_error_in_write()
     // flush calback fails
     test_platform_nvm_api_set_retval(PLATFORM_NVM_OK);
     nsdynmemlib_stub.returnCounter = 2;
-    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, &buf, &buf_len, TEST_NS_NVM_HELPER_CONTEXT1);
+    ret_val = ns_nvm_data_write(test_ns_nvm_helper_write_callback, key1, buf, &buf_len, (void *)TEST_NS_NVM_HELPER_CONTEXT1);
     if (ret_val != NS_NVM_OK) {
         return false;
     }
@@ -431,7 +434,7 @@ bool test_ns_nvm_helper_platform_error_in_write()
     // make flush callback with error
     test_platform_nvm_api_set_retval(PLATFORM_NVM_ERROR);
     test_platform_nvm_api_callback();
-    if (write_callback_status != NS_NVM_ERROR || write_callback_context != TEST_NS_NVM_HELPER_CONTEXT1) {
+    if (write_callback_status != NS_NVM_ERROR || write_callback_context != (void *)TEST_NS_NVM_HELPER_CONTEXT1) {
         return false;
     }
 
