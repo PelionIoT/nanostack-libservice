@@ -18,6 +18,7 @@
 #include "nsdynmemLIB_stub.h"
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include <nsdynmemLIB.h>
 #include "platform/arm_hal_interrupt.h"
 #ifdef STANDARD_MALLOC
