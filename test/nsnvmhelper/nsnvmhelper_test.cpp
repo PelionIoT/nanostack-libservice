@@ -28,39 +28,13 @@ protected:
     }
 };
 
-TEST_F(nsnvmhelper_test, test_ns_nvm_helper_write)
-{
-    ASSERT_EQ(true, test_ns_nvm_helper_write());
-}
-
-TEST_F(nsnvmhelper_test, test_ns_nvm_helper_delete)
+TEST_F(nsnvmhelper_test, test_ns_nvm_helper)
 {
     ASSERT_EQ(true, test_ns_nvm_helper_write());
     ASSERT_EQ(true, test_ns_nvm_helper_delete());
-}
-
-TEST_F(nsnvmhelper_test, test_ns_nvm_helper_read)
-{
-    ASSERT_EQ(true, test_ns_nvm_helper_write());
     ASSERT_EQ(true, test_ns_nvm_helper_read());
-}
-
-TEST_F(nsnvmhelper_test, test_ns_nvm_helper_concurrent_requests)
-{
-    ASSERT_EQ(true, test_ns_nvm_helper_write());
     ASSERT_EQ(true, test_ns_nvm_helper_concurrent_requests());
-}
-
-TEST_F(nsnvmhelper_test, test_ns_nvm_helper_platform_error)
-{
-    ASSERT_EQ(true, test_ns_nvm_helper_write());
     ASSERT_EQ(true, test_ns_nvm_helper_platform_error());
-}
-
-TEST_F(nsnvmhelper_test, test_ns_nvm_helper_platform_error_in_write)
-{
-    ASSERT_EQ(true, test_ns_nvm_helper_write());
     ASSERT_EQ(true, test_ns_nvm_helper_platform_error_in_write());
 }
-
 

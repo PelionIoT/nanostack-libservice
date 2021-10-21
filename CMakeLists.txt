@@ -107,35 +107,34 @@ target_link_libraries(
     gtest_main
 )
 
-# TODO: Fix these tests
-# add_executable(nsnvmhelper_test EXCLUDE_FROM_ALL
-#     source/nvmHelper/ns_nvm_helper.c
-#     test/nsnvmhelper/nsnvmhelper_test.cpp
-#     test/nsnvmhelper/test_ns_nvm_helper.c
-#     test/nsnvmhelper/test_ns_nvm_helper.h
-#     test/stubs/platform_nvm_stub.c
-#     test/stubs/nsdynmemLIB_stub.c
-#     test/stubs/ns_list_stub.c
-# )
-# # make check, this must be after add_executable!
-# add_test(nsnvmhelper_test nsnvmhelper_test)
-# if (TARGET check)
-#     add_dependencies(check nsnvmhelper_test)
-# else()
-#     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-#                   DEPENDS nsnvmhelper_test)
-# endif()
+add_executable(nsnvmhelper_test EXCLUDE_FROM_ALL
+    source/nvmHelper/ns_nvm_helper.c
+    test/nsnvmhelper/nsnvmhelper_test.cpp
+    test/nsnvmhelper/test_ns_nvm_helper.c
+    test/nsnvmhelper/test_ns_nvm_helper.h
+    test/stubs/platform_nvm_stub.c
+    test/stubs/nsdynmemLIB_stub.c
+    test/stubs/ns_list_stub.c
+)
+# make check, this must be after add_executable!
+add_test(nsnvmhelper_test nsnvmhelper_test)
+if (TARGET check)
+    add_dependencies(check nsnvmhelper_test)
+else()
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
+                  DEPENDS nsnvmhelper_test)
+endif()
 
-# target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
-# target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
+target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
+target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
 
-# target_link_libraries(
-#     nsnvmhelper_test
-#     gtest_main
-# )
+target_link_libraries(
+    nsnvmhelper_test
+    gtest_main
+)
 
 # GTest framework requires C++ version 11
-set_target_properties(dynmem_test ip6tos_test stoip6_test #nsnvmhelper_test
+set_target_properties(dynmem_test ip6tos_test stoip6_test nsnvmhelper_test
 PROPERTIES
     CXX_STANDARD 11
 )
@@ -144,7 +143,7 @@ include(GoogleTest)
 gtest_discover_tests(ip6tos_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR ip6tos)
 gtest_discover_tests(stoip6_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR stoip6)
 gtest_discover_tests(dynmem_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR nsdynmem)
-#gtest_discover_tests(nsnvmhelper_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR nvmhelper))
+gtest_discover_tests(nsnvmhelper_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR nvmhelper)
 
 if (enable_coverage_data AND ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html")
