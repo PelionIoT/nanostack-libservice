@@ -40,19 +40,13 @@ if (test_all OR ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
     endif ()
 
-    add_executable(ip6tos_test EXCLUDE_FROM_ALL
+    add_executable(ip6tos_test
         source/libip6string/ip6tos.c
         source/libBits/common_functions.c
         test/ip6tos/ip6tos_test.cpp
     )
-    # make check, this must be after add_executable!
+
     add_test(ip6tos_test ip6tos_test)
-    if (TARGET check)
-        add_dependencies(check ip6tos_test)
-    else()
-        add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-                    DEPENDS ip6tos_test)
-    endif()
 
     target_include_directories(ip6tos_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
     target_include_directories(ip6tos_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
@@ -64,19 +58,13 @@ if (test_all OR ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
 
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test/stubs)
 
-    add_executable(stoip6_test EXCLUDE_FROM_ALL
+    add_executable(stoip6_test
         source/libip6string/stoip6.c
         source/libBits/common_functions.c
         test/stoip6/stoip6_test.cpp
     )
-    # make check, this must be after add_executable!
+
     add_test(stoip6_test stoip6_test)
-    if (TARGET check)
-        add_dependencies(check stoip6_test)
-    else()
-        add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-                    DEPENDS stoip6_test)
-    endif()
 
     target_include_directories(stoip6_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
     target_include_directories(stoip6_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
@@ -86,7 +74,7 @@ if (test_all OR ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
         gtest_main
     )
 
-    add_executable(dynmem_test EXCLUDE_FROM_ALL
+    add_executable(dynmem_test
         source/nsdynmemLIB/nsdynmemLIB.c
         test/nsdynmem/dynmem_test.cpp
         test/nsdynmem/error_callback.c
@@ -94,14 +82,8 @@ if (test_all OR ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
         test/stubs/platform_critical.c
         test/stubs/ns_list_stub.c
     )
-    # make check, this must be after add_executable!
+
     add_test(dynmem_test dynmem_test)
-    if (TARGET check)
-        add_dependencies(check dynmem_test)
-    else()
-        add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-                    DEPENDS dynmem_test)
-    endif()
 
     target_include_directories(dynmem_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
     target_include_directories(dynmem_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
@@ -111,7 +93,7 @@ if (test_all OR ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
         gtest_main
     )
 
-    add_executable(nsnvmhelper_test EXCLUDE_FROM_ALL
+    add_executable(nsnvmhelper_test
         source/nvmHelper/ns_nvm_helper.c
         test/nsnvmhelper/nsnvmhelper_test.cpp
         test/nsnvmhelper/test_ns_nvm_helper.c
@@ -120,14 +102,6 @@ if (test_all OR ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
         test/stubs/nsdynmemLIB_stub.c
         test/stubs/ns_list_stub.c
     )
-    # make check, this must be after add_executable!
-    add_test(nsnvmhelper_test nsnvmhelper_test)
-    if (TARGET check)
-        add_dependencies(check nsnvmhelper_test)
-    else()
-        add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-                    DEPENDS nsnvmhelper_test)
-    endif()
 
     target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
     target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
