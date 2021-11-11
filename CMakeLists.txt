@@ -34,17 +34,28 @@ if (test_all OR ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
     # Tests after this line
     enable_testing()
 
+    message("LIBSERVICE")
+
     if (enable_coverage_data)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
     endif ()
 
-    add_executable(ip6tos_test
+    add_executable(ip6tos_test EXCLUDE_FROM_ALL
         source/libip6string/ip6tos.c
         source/libBits/common_functions.c
         test/ip6tos/ip6tos_test.cpp
     )
+
+    if (TARGET check)
+        message("libs CHECK TRUE")
+        add_dependencies(check nanostack-libservice)
+    else()
+        message("libs CHECK FALSE")
+        add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
+                    DEPENDS ip6tos_test)
+    endif()
 
     add_test(ip6tos_test ip6tos_test)
 
@@ -58,77 +69,77 @@ if (test_all OR ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
 
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test/stubs)
 
-    add_executable(stoip6_test
-        source/libip6string/stoip6.c
-        source/libBits/common_functions.c
-        test/stoip6/stoip6_test.cpp
-    )
+    # add_executable(stoip6_test
+    #     source/libip6string/stoip6.c
+    #     source/libBits/common_functions.c
+    #     test/stoip6/stoip6_test.cpp
+    # )
 
-    add_test(stoip6_test stoip6_test)
+    # add_test(stoip6_test stoip6_test)
 
-    target_include_directories(stoip6_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
-    target_include_directories(stoip6_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
+    # target_include_directories(stoip6_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
+    # target_include_directories(stoip6_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
 
-    target_link_libraries(
-        stoip6_test
-        gtest_main
-    )
+    # target_link_libraries(
+    #     stoip6_test
+    #     gtest_main
+    # )
 
-    add_executable(dynmem_test
-        source/nsdynmemLIB/nsdynmemLIB.c
-        test/nsdynmem/dynmem_test.cpp
-        test/nsdynmem/error_callback.c
-        test/nsdynmem/error_callback.h
-        test/stubs/platform_critical.c
-        test/stubs/ns_list_stub.c
-    )
+    # add_executable(dynmem_test
+    #     source/nsdynmemLIB/nsdynmemLIB.c
+    #     test/nsdynmem/dynmem_test.cpp
+    #     test/nsdynmem/error_callback.c
+    #     test/nsdynmem/error_callback.h
+    #     test/stubs/platform_critical.c
+    #     test/stubs/ns_list_stub.c
+    # )
 
-    add_test(dynmem_test dynmem_test)
+    # add_test(dynmem_test dynmem_test)
 
-    target_include_directories(dynmem_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
-    target_include_directories(dynmem_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
+    # target_include_directories(dynmem_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
+    # target_include_directories(dynmem_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
 
-    target_link_libraries(
-        dynmem_test
-        gtest_main
-    )
+    # target_link_libraries(
+    #     dynmem_test
+    #     gtest_main
+    # )
 
-    add_executable(nsnvmhelper_test
-        source/nvmHelper/ns_nvm_helper.c
-        test/nsnvmhelper/nsnvmhelper_test.cpp
-        test/nsnvmhelper/test_ns_nvm_helper.c
-        test/nsnvmhelper/test_ns_nvm_helper.h
-        test/stubs/platform_nvm_stub.c
-        test/stubs/nsdynmemLIB_stub.c
-        test/stubs/ns_list_stub.c
-    )
+    # add_executable(nsnvmhelper_test
+    #     source/nvmHelper/ns_nvm_helper.c
+    #     test/nsnvmhelper/nsnvmhelper_test.cpp
+    #     test/nsnvmhelper/test_ns_nvm_helper.c
+    #     test/nsnvmhelper/test_ns_nvm_helper.h
+    #     test/stubs/platform_nvm_stub.c
+    #     test/stubs/nsdynmemLIB_stub.c
+    #     test/stubs/ns_list_stub.c
+    # )
 
-    target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
-    target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
+    # target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice)
+    # target_include_directories(nsnvmhelper_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/mbed-client-libservice/platform)
 
-    target_link_libraries(
-        nsnvmhelper_test
-        gtest_main
-    )
+    # target_link_libraries(
+    #     nsnvmhelper_test
+    #     gtest_main
+    # )
 
     # GTest framework requires C++ version 11
-    set_target_properties(dynmem_test ip6tos_test stoip6_test nsnvmhelper_test
+    set_target_properties(ip6tos_test# dynmem_test stoip6_test nsnvmhelper_test
     PROPERTIES
         CXX_STANDARD 11
     )
 
     include(GoogleTest)
     gtest_discover_tests(ip6tos_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR ip6tos)
-    gtest_discover_tests(stoip6_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR stoip6)
-    gtest_discover_tests(dynmem_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR nsdynmem)
-    gtest_discover_tests(nsnvmhelper_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR nvmhelper)
+    # gtest_discover_tests(stoip6_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR stoip6)
+    # gtest_discover_tests(dynmem_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR nsdynmem)
+    # gtest_discover_tests(nsnvmhelper_test EXTRA_ARGS --gtest_output=xml: XML_OUTPUT_DIR nvmhelper)
 
-    if (enable_coverage_data AND ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
-        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html")
+    # if (enable_coverage_data AND ${CMAKE_PROJECT_NAME} STREQUAL "nanostack-libservice")
+    #     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html")
 
-        add_test(NAME ls_cov WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND ${BASH} -c "gcovr -r . -e ${CMAKE_CURRENT_SOURCE_DIR}/build -e '.*test.*' --html --html-details -o build/html/coverity_index.html"
-        )
-    endif ()
+    #     add_test(NAME ls_cov WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    #         COMMAND ${BASH} -c "gcovr -r . -e ${CMAKE_CURRENT_SOURCE_DIR}/build -e '.*test.*' --html --html-details -o build/html/coverity_index.html"
+    #     )
+    # endif ()
 endif()
 
